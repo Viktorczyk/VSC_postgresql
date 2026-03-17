@@ -1,0 +1,28 @@
+{
+    "sqltools.connections": [
+        {
+            "ssh": "Disabled",
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 5432,
+            "driver": "PostgreSQL",
+            "name": "PGlOCAL",
+            "database": "postgres",
+            "username": "postgres",
+            "password": "root",
+            "connectionTimeout": 30
+        },
+        {
+            "ssh": "Disabled",
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 5432,
+            "askForPassword": true,
+            "driver": "PostgreSQL",
+            "name": "Dblocal",
+            "database": "DBLocal",
+            "username": "postgres",
+            "connectionTimeout": 30
+        }
+    ]
+}
