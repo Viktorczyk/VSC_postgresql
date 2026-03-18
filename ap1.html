@@ -20,6 +20,13 @@
     .modal .close-btn{background:#f3f4f6;color:#1f2937;margin-right:8px}
     .modal .check-btn{background:#2563eb;color:#fff}
     .modal .modal-status{margin-top:10px;font-size:13px}
+    .jac-bookings{margin-top:14px;font-size:13px}
+    .jac-bookings table{width:100%;border-collapse:collapse;font-size:13px}
+    .jac-bookings th,.jac-bookings td{padding:6px 8px;border:1px solid #d1d5db;text-align:left}
+    .jac-bookings th{background:#f3f4f6;color:#111;font-weight:600}
+    .jac-bookings .apart1{background:#e0f2ff}
+    .jac-bookings .apart2{background:#e6ffed}
+    .jac-bookings .no-bookings{padding:10px;text-align:center;color:#4b5563;background:#f9fafb;border-radius:8px}
   </style>
 </head>
 <body>
@@ -72,6 +79,7 @@
             <button type="button" class="check-btn" onclick="applyModalDates()">Zastosuj</button>
           </div>
           <div id="jacModalStatus" class="modal-status"></div>
+          <div id="jacBookings" class="jac-bookings" style="display:none"></div>
         </div>
       </div>
 
@@ -145,6 +153,20 @@
     const dateFrom = form.elements['Date_Form'];
     const dateTo = form.elements['Date_to'];
 
+    // Date validation
+    dateFrom.addEventListener('change', () => {
+      dateTo.min = dateFrom.value;
+      if (dateTo.value && dateTo.value < dateFrom.value) {
+        dateTo.value = '';
+      }
+    });
+    dateTo.addEventListener('change', () => {
+      if (dateTo.value < dateFrom.value) {
+        alert('Data "do" nie może być wcześniejsza niż data "od".');
+        dateTo.value = '';
+      }
+    });
+
     function formatDate(date) {
       return date.toISOString().slice(0, 10);
     }
@@ -162,8 +184,14 @@
     }
 
     function openJacModal() {
+      // Zablokuj wybór dat w modalu - jacuzzi tylko na zakres rezerwacji apartamentu
       setDefaultDates();
       updateJacModalLimits();
+      jacFrom.value = dateFrom.value;
+      jacTo.value = dateTo.value;
+      jacFrom.disabled = true;
+      jacTo.disabled = true;
+
       jacModal.style.display = 'flex';
       checkJac();
     }
@@ -185,20 +213,49 @@
     }
 
     function applyModalDates() {
-      if (!jacFrom.value || !jacTo.value) {
-        jacModalStatus.textContent = 'Wybierz datę startu i końca.';
+      // Jacuzzi rezerwowane jest dokładnie na te same daty, co apartament.
+      // Nie pozwalamy wybierać innych dat w modalu, więc wystarczy sprawdzić dostępność.
+      checkJac();
+      closeJacModal();
+    }
+
+    function formatDateDDMMYY(ymd) {
+      if (!ymd) return '';
+      const datePart = ymd.split('T')[0];
+      const parts = datePart.split('-');
+      if (parts.length !== 3) return ymd;
+      const [y, m, d] = parts;
+      return `${d}-${m}-${y.slice(-2)}`;
+    }
+
+    function renderJacBookings(bookings) {
+      const container = document.getElementById('jacBookings');
+      if (!bookings || bookings.length === 0) {
+        container.innerHTML = '<div class="no-bookings">Brak rezerwacji jacuzzi w wybranym zakresie.</div>';
+        container.style.display = 'block';
         return;
       }
 
-      dateFrom.value = jacFrom.value;
-      dateTo.value = jacTo.value;
-      checkJac();
-      closeJacModal();
+      const rows = bookings.map(b => {
+        const cls = b.apart === 1 ? 'apart1' : 'apart2';
+        return `<tr class="${cls}"><td>Apartament ${b.apart}</td><td>${formatDateDDMMYY(b.date_form)}</td><td>${formatDateDDMMYY(b.date_to)}</td></tr>`;
+      }).join('');
+
+      container.innerHTML = `
+        <table>
+          <thead>
+            <tr><th>Apartament</th><th>Od</th><th>Do</th></tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
+      container.style.display = 'block';
     }
 
     async function checkJac(){
       jacStatus.style.display='none';
       jacModalStatus.textContent = '';
+      document.getElementById('jacBookings').style.display = 'none';
 
       if(!jacCheck.checked) return true;
       const f = dateFrom.value, t = dateTo.value;
@@ -210,6 +267,8 @@
       try{
         const res = await fetch('/booking/jacuuzi/check?from=' + encodeURIComponent(f) + '&to=' + encodeURIComponent(t));
         const data = await res.json();
+        renderJacBookings(data.bookings);
+
         if(data.available){
           messageEl.textContent='Jacuzzi dostępne';
           messageEl.style.color='green';
@@ -231,8 +290,7 @@
       else closeJacModal();
     });
 
-    jacFrom.addEventListener('change', () => { jacTo.min = jacFrom.value; });
-    jacTo.addEventListener('change', () => { jacFrom.max = jacTo.value; });
+    // Date inputs in modal are locked to apartment booking range, so no listeners needed
 
     dateFrom.addEventListener('change', () => { if(jacCheck.checked) checkJac(); });
     dateTo.addEventListener('change', () => { if(jacCheck.checked) checkJac(); });
@@ -249,7 +307,11 @@
       }
 
       const formData = new FormData(form);
-      const res = await fetch(form.action, { method: 'POST', body: formData });
+      const res = await fetch(form.action, {
+        method: 'POST',
+        body: new URLSearchParams(formData),
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+      });
       if (!res.ok) {
         const data = await res.json().catch(() => null);
         alert(data?.error || 'Błąd podczas rezerwacji. Spróbuj ponownie.');

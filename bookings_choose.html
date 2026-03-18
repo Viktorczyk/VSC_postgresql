@@ -15,6 +15,11 @@
     .list{display:flex;gap:12px}
     a.card{flex:1;padding:14px;border-radius:8px;text-decoration:none;color:#0b1f3a;background:#f8fafc;border:1px solid #e6eefb;display:block;text-align:center}
     a.card:hover{box-shadow:0 6px 18px rgba(2,6,23,0.06)}
+    .bookings{margin-top:10px;font-size:13px}
+    .bookings table{width:100%;border-collapse:collapse;font-size:13px}
+    .bookings th,.bookings td{padding:6px 8px;border:1px solid #d1d5db;text-align:left}
+    .bookings th{background:#f3f4f6;color:#111;font-weight:600}
+    .bookings .no-bookings{padding:10px;text-align:center;color:#4b5563;background:#f9fafb;border-radius:8px}
   </style>
 </head>
 <body>
@@ -32,6 +37,19 @@
       <div class="list">
         <a class="card" href="/booking/ap1/form" style="text-align:center;padding:18px;text-decoration:none;color:#0b1f3a;display:block">🏠 Apartament 1</a>
         <a class="card" href="/booking/ap2/form" style="text-align:center;padding:18px;text-decoration:none;color:#0b1f3a;display:block">🏠 Apartament 2</a>
+      </div>
+
+      <div style="margin-top:28px">
+        <div style="display:flex;gap:20px;flex-wrap:wrap">
+          <div style="flex:1;min-width:260px">
+            <h2 style="margin:0 0 10px;font-size:16px">Rezerwacje: Apartament 1</h2>
+            <div id="bookings1" class="bookings"></div>
+          </div>
+          <div style="flex:1;min-width:260px">
+            <h2 style="margin:0 0 10px;font-size:16px">Rezerwacje: Apartament 2</h2>
+            <div id="bookings2" class="bookings"></div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -71,6 +89,7 @@
           // Ustaw czas sesji z serwera
           sessionTimeLeft = data.sessionTimeLeft || (15 * 60);
           startSessionTimer(); // uruchom licznik po potwierdzeniu logowania
+          loadBookings();
         } else {
           window.location.href = '/login.html';
         }
@@ -83,6 +102,53 @@
     function logout() {
       if (confirm('Czy na pewno chcesz się wylogować?')) {
         window.location.href = '/api/logout';
+      }
+    }
+
+    function formatDateDDMMYY(ymd) {
+      if (!ymd) return '';
+      const datePart = ymd.split('T')[0];
+      const parts = datePart.split('-');
+      if (parts.length !== 3) return ymd;
+      const [y, m, d] = parts;
+      return `${d}-${m}-${y.slice(-2)}`;
+    }
+
+    function renderBookings(containerId, bookings) {
+      const container = document.getElementById(containerId);
+      if (!bookings || bookings.length === 0) {
+        container.innerHTML = '<div class="no-bookings">Brak rezerwacji</div>';
+        return;
+      }
+
+      const rows = bookings.map(b => {
+        return `<tr><td>${formatDateDDMMYY(b.date_form)}</td><td>${formatDateDDMMYY(b.date_to)}</td><td>${b.name} ${b.surname}</td><td>${b.is_jacuzzi ? '✅' : ''}</td></tr>`;
+      }).join('');
+
+      container.innerHTML = `
+        <table>
+          <thead>
+            <tr><th>Od</th><th>Do</th><th>Kto</th><th>Jacuzzi</th></tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
+    }
+
+    async function loadBookings() {
+      try {
+        const [res1, res2] = await Promise.all([
+          fetch('/api/bookings?apart=1'),
+          fetch('/api/bookings?apart=2'),
+        ]);
+
+        const data1 = await res1.json();
+        const data2 = await res2.json();
+
+        renderBookings('bookings1', data1.bookings);
+        renderBookings('bookings2', data2.bookings);
+      } catch (err) {
+        console.error('Error loading bookings:', err);
       }
     }
 
