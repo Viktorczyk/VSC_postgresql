@@ -1,0 +1,99 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Logowanie - System Rezerwacji</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    :root{--bg:#f6f8fa;--card:#ffffff;--accent:#0d6efd;--muted:#6b7280;--error:#dc2626}
+    *{box-sizing:border-box}
+    body{font-family:Inter,Segoe UI,Helvetica,Arial,sans-serif;background:var(--bg);margin:0;padding:32px;display:flex;align-items:center;justify-content:center;min-height:100vh}
+    .login-container{width:100%;max-width:420px;background:var(--card);padding:28px;border-radius:12px;box-shadow:0 10px 30px rgba(2,6,23,0.06)}
+    h1{margin:0 0 8px;font-size:24px;color:#0f172a;text-align:center}
+    .subtitle{text-align:center;color:var(--muted);margin-bottom:24px;font-size:14px}
+    .form-group{margin-bottom:18px}
+    label{display:block;font-size:13px;color:#374151;margin-bottom:6px;font-weight:500}
+    input[type="text"],input[type="password"]{width:100%;padding:12px 14px;border:1px solid #e6e9ef;border-radius:8px;font-size:15px;font-family:inherit}
+    input[type="text"]:focus,input[type="password"]:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(13,110,253,0.1)}
+    .error-message{background:#fee2e2;color:var(--error);padding:10px 12px;border-radius:6px;font-size:13px;margin-bottom:16px;display:none}
+    .actions{margin-top:20px}
+    button.primary{width:100%;background:var(--accent);color:#fff;border:none;padding:12px 14px;border-radius:8px;cursor:pointer;font-weight:600;font-size:14px}
+    button.primary:hover{background:#0b5ed7}
+    button.primary:active{transform:scale(0.98)}
+    .info{margin-top:16px;padding:12px;background:#dbeafe;border-radius:6px;font-size:13px;color:#1e40af;text-align:center}
+    .info strong{display:block;margin-bottom:4px}
+    .loading{display:none}
+    button.primary:disabled{opacity:0.7;cursor:not-allowed}
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <h1>🔐 System Rezerwacji</h1>
+    <p class="subtitle">Zaloguj się aby uzyskać dostęp do rezerwacji</p>
+    
+    <div id="errorMsg" class="error-message"></div>
+    
+    <form id="loginForm">
+      <div class="form-group">
+        <label for="email">Adres e-mail</label>
+        <input type="text" id="email" name="email" required placeholder="jan@example.com" autocomplete="email">
+      </div>
+      
+      <div class="form-group">
+        <label for="password">Hasło</label>
+        <input type="password" id="password" name="password" required placeholder="Twoje hasło" autocomplete="current-password">
+      </div>
+      
+      <div class="actions">
+        <button type="submit" class="primary" id="loginBtn">Zaloguj się</button>
+      </div>
+    </form>
+
+    <div class="info">
+      <strong>Dane testowe:</strong>
+      Email: test@example.com<br>
+      Hasło: password123
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('loginForm');
+    const loginBtn = document.getElementById('loginBtn');
+    const errorMsg = document.getElementById('errorMsg');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorMsg.style.display = 'none';
+      loginBtn.disabled = true;
+      loginBtn.textContent = 'Logowanie...';
+
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+
+      try {
+        const response = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          window.location.href = '/bookings/choose';
+        } else {
+          errorMsg.textContent = data.error || 'Błąd logowania. Sprawdź dane.';
+          errorMsg.style.display = 'block';
+          loginBtn.disabled = false;
+          loginBtn.textContent = 'Zaloguj się';
+        }
+      } catch (err) {
+        errorMsg.textContent = 'Błąd komunikacji z serwerem';
+        errorMsg.style.display = 'block';
+        loginBtn.disabled = false;
+        loginBtn.textContent = 'Zaloguj się';
+      }
+    });
+  </script>
+</body>
+</html>

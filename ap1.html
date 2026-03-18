@@ -1,0 +1,263 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Rezerwacja — Apartament 1</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="stylesheet" href="/.vscode/styles.css">
+  <style>
+    .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid #e6eefb}
+    .user-info{display:flex;align-items:center;gap:12px;font-size:14px}
+    .logout-btn{background:#dc2626;color:#fff;border:none;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500}
+    .logout-btn:hover{background:#b91c1c}
+    .session-timer{display:inline-flex;align-items:center;gap:8px;padding:4px 10px;border-radius:999px;background:#eef3ff;color:#1a3a7b;border:1px solid #c7d4ff;font-size:12px;font-weight:600}
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.35);display:none;align-items:center;justify-content:center;z-index:999}
+    .modal{background:#fff;padding:20px;border-radius:14px;box-shadow:0 20px 50px rgba(0,0,0,0.15);width:min(420px,calc(100% - 40px));}
+    .modal h2{margin-top:0;font-size:18px;color:#0b1f3a}
+    .modal .modal-row{display:flex;gap:10px;margin-bottom:12px}
+    .modal input[type=date]{flex:1;padding:8px 10px;border:1px solid #c8d3e8;border-radius:8px}
+    .modal button{padding:10px 14px;border:none;border-radius:8px;cursor:pointer;font-weight:600}
+    .modal .close-btn{background:#f3f4f6;color:#1f2937;margin-right:8px}
+    .modal .check-btn{background:#2563eb;color:#fff}
+    .modal .modal-status{margin-top:10px;font-size:13px}
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1 style="margin:0">Rezerwacja — Apartament 1</h1>
+    <div class="user-info">
+      <span>👤 <span id="userEmail">...</span></span>
+      <span id="sessionTimer" style="font-size:12px;color:#666;margin-right:10px">Sesja: --:--</span>
+      <button class="logout-btn" onclick="logout()">Wyloguj</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <form id="apForm" method="post" action="/booking/ap1">
+      <div class="row" style="flex-direction:column">
+      <div class="col"><label>Email<input name="email" type="email" required></label></div>
+      <div class="col"><label>Imię<input name="name" type="text" required></label></div>
+      <div class="col"><label>Nazwisko<input name="surname" type="text" required></label></div>
+    </div>
+
+    <div class="date-row">
+      <div class="col"><label>Termin od<input name="Date_Form" type="date" required></label></div>
+      <div class="col"><label>Termin do<input name="Date_to" type="date" required></label></div>
+    </div>
+
+    <div class="row" style="flex-direction:column; gap:10px;">
+      <label style="display:flex;align-items:center;gap:10px"><input id="advanceCheck" type="checkbox" name="IS_advance_payment" value="1"> Zaliczka</label>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <label style="flex:1"><span>Ilość zaliczki</span><input id="advanceAmount" name="amount_advance_payment" type="number" min="0" step="1" placeholder="0"></label>
+        <label style="width:140px">Waluta<select name="CURRENCY">
+          <option value="PLN" selected>PLN</option>
+          <option value="EUR">EUR</option>
+          <option value="USD">USD</option>
+        </select></label>
+      </div>
+    </div>
+
+    <label><input id="jacCheck" type="checkbox" name="IS_JACUZZI" value="1"> Chcę jacuzzi</label>
+      <div id="jacStatus" class="avail" style="display:none"></div>
+
+      <div id="jacModal" class="modal-overlay" onclick="closeJacModal(event)">
+        <div class="modal" onclick="event.stopPropagation()">
+          <h2>Sprawdź dostępność jacuzzi</h2>
+          <div class="modal-row">
+            <input id="jacFrom" type="date" />
+            <input id="jacTo" type="date" />
+          </div>
+          <div class="modal-row" style="justify-content:flex-end">
+            <button type="button" class="close-btn" onclick="closeJacModal(event)">Anuluj</button>
+            <button type="button" class="check-btn" onclick="applyModalDates()">Zastosuj</button>
+          </div>
+          <div id="jacModalStatus" class="modal-status"></div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button type="submit" class="primary">Zarezerwuj</button>
+        <button type="button" class="secondary" onclick="location.href='/bookings/choose'">Anuluj</button>
+      </div>
+      <p class="note">Jeśli wybierzesz jacuzzi, system sprawdzi jego dostępność w podanym terminie.</p>
+    </form>
+  </div>
+
+  <script>
+    // Licznik sesji - czas pobierany z serwera
+    let sessionTimeLeft = 0; // zostanie ustawiony z API
+    let sessionInterval;
+
+    function updateSessionTimer() {
+      const minutes = Math.floor(sessionTimeLeft / 60);
+      const seconds = sessionTimeLeft % 60;
+      const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      
+      document.getElementById('sessionTimer').textContent = `Sesja: ${timeString}`;
+      
+      if (sessionTimeLeft <= 0) {
+        clearInterval(sessionInterval);
+        alert('Sesja wygasła. Zostaniesz przekierowany na stronę logowania.');
+        window.location.href = '/login.html';
+      }
+      sessionTimeLeft--;
+    }
+
+    function startSessionTimer() {
+      updateSessionTimer(); // natychmiastowa aktualizacja
+      sessionInterval = setInterval(updateSessionTimer, 1000);
+    }
+
+    // Załaduj informacje o zalogowanym użytkowniku
+    async function loadUserInfo() {
+      try {
+        const response = await fetch('/api/user');
+        const data = await response.json();
+        if (data.logged) {
+          document.getElementById('userEmail').textContent = data.email;
+          // Ustaw czas sesji z serwera
+          sessionTimeLeft = data.sessionTimeLeft || (15 * 60);
+          startSessionTimer(); // uruchom licznik po potwierdzeniu logowania
+        } else {
+          window.location.href = '/login.html';
+        }
+      } catch (err) {
+        console.error('Error loading user info:', err);
+      }
+    }
+
+    // Wylogowanie
+    function logout() {
+      if (confirm('Czy na pewno chcesz się wylogować?')) {
+        window.location.href = '/api/logout';
+      }
+    }
+
+    loadUserInfo();
+
+    const jacCheck = document.getElementById('jacCheck');
+    const jacModal = document.getElementById('jacModal');
+    const jacFrom = document.getElementById('jacFrom');
+    const jacTo = document.getElementById('jacTo');
+    const jacModalStatus = document.getElementById('jacModalStatus');
+    const form = document.getElementById('apForm');
+    const jacStatus = document.getElementById('jacStatus');
+    const dateFrom = form.elements['Date_Form'];
+    const dateTo = form.elements['Date_to'];
+
+    function formatDate(date) {
+      return date.toISOString().slice(0, 10);
+    }
+
+    function setDefaultDates() {
+      const today = new Date();
+      const nextDay = new Date(today);
+      nextDay.setDate(today.getDate() + 1);
+
+      if (!dateFrom.value) dateFrom.value = formatDate(today);
+      if (!dateTo.value) dateTo.value = formatDate(nextDay);
+
+      jacFrom.value = dateFrom.value;
+      jacTo.value = dateTo.value;
+    }
+
+    function openJacModal() {
+      setDefaultDates();
+      updateJacModalLimits();
+      jacModal.style.display = 'flex';
+      checkJac();
+    }
+
+    function closeJacModal(event) {
+      if (event) event.stopPropagation();
+      jacModal.style.display = 'none';
+      jacModalStatus.textContent = '';
+    }
+
+    function updateJacModalLimits() {
+      const today = new Date();
+      const min = formatDate(today);
+      const max = formatDate(new Date(today.getFullYear(), today.getMonth() + 3, today.getDate()));
+      jacFrom.min = min;
+      jacTo.min = jacFrom.value || min;
+      jacFrom.max = max;
+      jacTo.max = max;
+    }
+
+    function applyModalDates() {
+      if (!jacFrom.value || !jacTo.value) {
+        jacModalStatus.textContent = 'Wybierz datę startu i końca.';
+        return;
+      }
+
+      dateFrom.value = jacFrom.value;
+      dateTo.value = jacTo.value;
+      checkJac();
+      closeJacModal();
+    }
+
+    async function checkJac(){
+      jacStatus.style.display='none';
+      jacModalStatus.textContent = '';
+
+      if(!jacCheck.checked) return true;
+      const f = dateFrom.value, t = dateTo.value;
+      if(!f || !t) return true;
+      const messageEl = jacModal.style.display === 'flex' ? jacModalStatus : jacStatus;
+      messageEl.textContent='Sprawdzanie dostępności...';
+      messageEl.style.display='block';
+
+      try{
+        const res = await fetch('/booking/jacuuzi/check?from=' + encodeURIComponent(f) + '&to=' + encodeURIComponent(t));
+        const data = await res.json();
+        if(data.available){
+          messageEl.textContent='Jacuzzi dostępne';
+          messageEl.style.color='green';
+          return true;
+        } else {
+          messageEl.textContent='Jacuzzi NIEDOSTĘPNE w tym terminie';
+          messageEl.style.color='red';
+          return false;
+        }
+      }catch(e){
+        messageEl.textContent='Błąd sprawdzania dostępności';
+        messageEl.style.color='orange';
+        return false;
+      }
+    }
+
+    jacCheck.addEventListener('change', () => {
+      if (jacCheck.checked) openJacModal();
+      else closeJacModal();
+    });
+
+    jacFrom.addEventListener('change', () => { jacTo.min = jacFrom.value; });
+    jacTo.addEventListener('change', () => { jacFrom.max = jacTo.value; });
+
+    dateFrom.addEventListener('change', () => { if(jacCheck.checked) checkJac(); });
+    dateTo.addEventListener('change', () => { if(jacCheck.checked) checkJac(); });
+
+    form.addEventListener('submit', async (ev)=>{
+      ev.preventDefault();
+
+      if (jacCheck.checked) {
+        const ok = await checkJac();
+        if (!ok) {
+          alert('Jacuzzi zajęte w wybranym terminie.');
+          return;
+        }
+      }
+
+      const formData = new FormData(form);
+      const res = await fetch(form.action, { method: 'POST', body: formData });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        alert(data?.error || 'Błąd podczas rezerwacji. Spróbuj ponownie.');
+        return;
+      }
+
+      window.location.href = '/bookings/choose';
+    });
+  </script>
+</body>
+</html>
