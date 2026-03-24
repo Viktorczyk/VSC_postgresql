@@ -6,20 +6,36 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <link rel="stylesheet" href="/.vscode/styles.css">
   <style>
-    .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid #e6eefb}
-    .user-info{display:flex;align-items:center;gap:12px;font-size:14px}
-    .logout-btn{background:#dc2626;color:#fff;border:none;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500}
+    .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid #e6eefb;flex-wrap:wrap;gap:12px}
+    .user-info{display:flex;align-items:center;gap:12px;font-size:12px;flex-wrap:wrap}
+    .logout-btn{background:#dc2626;color:#fff;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:500}
     .logout-btn:hover{background:#b91c1c}
-    .session-timer{display:inline-flex;align-items:center;gap:8px;padding:4px 10px;border-radius:999px;background:#eef3ff;color:#1a3a7b;border:1px solid #c7d4ff;font-size:12px;font-weight:600}
-    .box{background:#fff;padding:28px;border-radius:12px;box-shadow:0 10px 30px rgba(2,6,23,0.06);max-width:520px;width:100%}
-    .list{display:flex;gap:12px}
-    a.card{flex:1;padding:14px;border-radius:8px;text-decoration:none;color:#0b1f3a;background:#f8fafc;border:1px solid #e6eefb;display:block;text-align:center}
+    .session-timer{display:inline-flex;align-items:center;gap:8px;padding:4px 8px;border-radius:999px;background:#eef3ff;color:#1a3a7b;border:1px solid #c7d4ff;font-size:10px;font-weight:600}
+    .box{background:#fff;padding:16px;border-radius:12px;box-shadow:0 10px 30px rgba(2,6,23,0.06);max-width:520px;width:100%}
+    .list{display:flex;gap:12px;flex-wrap:wrap}
+    a.card{flex:1;min-width:120px;padding:12px;border-radius:8px;text-decoration:none;color:#0b1f3a;background:#f8fafc;border:1px solid #e6eefb;display:block;text-align:center;font-size:12px}
     a.card:hover{box-shadow:0 6px 18px rgba(2,6,23,0.06)}
-    .bookings{margin-top:10px;font-size:13px}
-    .bookings table{width:100%;border-collapse:collapse;font-size:13px}
-    .bookings th,.bookings td{padding:6px 8px;border:1px solid #d1d5db;text-align:left}
+    .bookings{margin-top:10px;font-size:11px;overflow-x:auto}
+    .bookings table{width:100%;border-collapse:collapse;font-size:11px;min-width:300px}
+    .bookings th,.bookings td{padding:4px 6px;border:1px solid #d1d5db;text-align:left}
     .bookings th{background:#f3f4f6;color:#111;font-weight:600}
-    .bookings .no-bookings{padding:10px;text-align:center;color:#4b5563;background:#f9fafb;border-radius:8px}
+    .bookings .no-bookings{padding:8px;text-align:center;color:#4b5563;background:#f9fafb;border-radius:8px;font-size:11px}
+    h1{font-size:18px}
+    h2{font-size:13px}
+    @media (min-width:768px){
+      .header{flex-wrap:nowrap}
+      .user-info{font-size:13px}
+      .logout-btn{font-size:12px;padding:8px 12px}
+      .session-timer{font-size:11px;padding:4px 10px}
+      .box{padding:24px}
+      .list{flex-wrap:nowrap}
+      a.card{font-size:13px;padding:15px}
+      .bookings{font-size:12px}
+      .bookings table{font-size:12px}
+      .bookings th,.bookings td{padding:6px 8px}
+      h1{font-size:20px}
+      h2{font-size:15px}
+    }
   </style>
 </head>
 <body>
@@ -35,20 +51,61 @@
     
     <div class="box" style="max-width:none">
       <div class="list">
-        <a class="card" href="/booking/ap1/form" style="text-align:center;padding:18px;text-decoration:none;color:#0b1f3a;display:block">🏠 Apartament 1</a>
-        <a class="card" href="/booking/ap2/form" style="text-align:center;padding:18px;text-decoration:none;color:#0b1f3a;display:block">🏠 Apartament 2</a>
+        <a class="card" href="/ap1.html" style="text-align:center;padding:18px;text-decoration:none;color:#0b1f3a;display:block">🏠 Apartament 1</a>
+        <a class="card" href="/ap2.html" style="text-align:center;padding:18px;text-decoration:none;color:#0b1f3a;display:block">🏠 Apartament 2</a>
+        <a class="card" href="/jacuzzi.html" style="text-align:center;padding:18px;text-decoration:none;color:#0b1f3a;display:block">🛁 Jacuzzi</a>
       </div>
 
-      <div style="margin-top:28px">
-        <div style="display:flex;gap:20px;flex-wrap:wrap">
-          <div style="flex:1;min-width:260px">
-            <h2 style="margin:0 0 10px;font-size:16px">Rezerwacje: Apartament 1</h2>
-            <div id="bookings1" class="bookings"></div>
+      <div style="margin-top:28px;display:flex;flex-direction:column;gap:24px">
+        <div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <h2 style="margin:0;font-size:16px">📅 Apartament 1</h2>
+            <div style="display:flex;gap:8px;align-items:center">
+              <button type="button" id="ap1PrevBtn" style="padding:4px 8px;border:1px solid #ddd;background:#f0f0f0;cursor:pointer;border-radius:4px">◀</button>
+              <span id="ap1MonthYear" style="min-width:120px;text-align:center;font-size:12px;font-weight:600"></span>
+              <button type="button" id="ap1NextBtn" style="padding:4px 8px;border:1px solid #ddd;background:#f0f0f0;cursor:pointer;border-radius:4px">▶</button>
+            </div>
           </div>
-          <div style="flex:1;min-width:260px">
-            <h2 style="margin:0 0 10px;font-size:16px">Rezerwacje: Apartament 2</h2>
-            <div id="bookings2" class="bookings"></div>
+          <div id="calendar1" style="overflow-x:auto;border:1px solid #e5e7eb;border-radius:8px;padding:10px;background:#fafafa"></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
+            <h3 style="margin:0;font-size:12px">Rezerwacje:</h3>
+            <button type="button" onclick="toggleBookings('ap1')" style="padding:4px 8px;border:1px solid #ddd;background:#f0f0f0;cursor:pointer;border-radius:4px;font-size:10px" id="ap1ToggleBtn">▼</button>
           </div>
+          <div id="ap1Bookings" style="overflow-x:auto;border:1px solid #e5e7eb;border-radius:8px;padding:8px;background:#fafafa;font-size:11px"></div>
+        </div>
+
+        <div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <h2 style="margin:0;font-size:16px">📅 Apartament 2</h2>
+            <div style="display:flex;gap:8px;align-items:center">
+              <button type="button" id="ap2PrevBtn" style="padding:4px 8px;border:1px solid #ddd;background:#f0f0f0;cursor:pointer;border-radius:4px">◀</button>
+              <span id="ap2MonthYear" style="min-width:120px;text-align:center;font-size:12px;font-weight:600"></span>
+              <button type="button" id="ap2NextBtn" style="padding:4px 8px;border:1px solid #ddd;background:#f0f0f0;cursor:pointer;border-radius:4px">▶</button>
+            </div>
+          </div>
+          <div id="calendar2" style="overflow-x:auto;border:1px solid #e5e7eb;border-radius:8px;padding:10px;background:#fafafa"></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
+            <h3 style="margin:0;font-size:12px">Rezerwacje:</h3>
+            <button type="button" onclick="toggleBookings('ap2')" style="padding:4px 8px;border:1px solid #ddd;background:#f0f0f0;cursor:pointer;border-radius:4px;font-size:10px" id="ap2ToggleBtn">▼</button>
+          </div>
+          <div id="ap2Bookings" style="overflow-x:auto;border:1px solid #e5e7eb;border-radius:8px;padding:8px;background:#fafafa;font-size:11px"></div>
+        </div>
+
+        <div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <h2 style="margin:0;font-size:16px">🛁 Jacuzzi</h2>
+            <div style="display:flex;gap:8px;align-items:center">
+              <button type="button" id="jacuzziPrevBtn" style="padding:4px 8px;border:1px solid #ddd;background:#f0f0f0;cursor:pointer;border-radius:4px">◀</button>
+              <span id="jacuzziMonthYear" style="min-width:120px;text-align:center;font-size:12px;font-weight:600"></span>
+              <button type="button" id="jacuzziNextBtn" style="padding:4px 8px;border:1px solid #ddd;background:#f0f0f0;cursor:pointer;border-radius:4px">▶</button>
+            </div>
+          </div>
+          <div id="jacuzziCalendar" style="overflow-x:auto;border:1px solid #e5e7eb;border-radius:8px;padding:10px;background:#fafafa"></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
+            <h3 style="margin:0;font-size:12px">Rezerwacje:</h3>
+            <button type="button" onclick="toggleBookings('jacuzzi')" style="padding:4px 8px;border:1px solid #ddd;background:#f0f0f0;cursor:pointer;border-radius:4px;font-size:10px" id="jacuzziToggleBtn">▼</button>
+          </div>
+          <div id="jacuzziBookings" style="overflow-x:auto;border:1px solid #e5e7eb;border-radius:8px;padding:8px;background:#fafafa;font-size:11px"></div>
         </div>
       </div>
     </div>
@@ -114,6 +171,273 @@
       return `${d}-${m}-${y.slice(-2)}`;
     }
 
+    // Check if booking has advance payment (handles different field names)
+    function hasAdvancePayment(booking) {
+      if (!booking) return false;
+      // Check various possible field names
+      const hasPayment = booking.IS_advance_payment || 
+                         booking.is_advance_payment || 
+                         booking.advance_payment ||
+                         booking.IS_ADVANCE_PAYMENT;
+      return !!hasPayment;
+    }
+
+    // Get advance payment amount
+    function getAdvanceAmount(booking) {
+      return booking.amount_advance_payment || 
+             booking.advance_amount || 
+             booking.amount || 
+             booking.ADVANCE_AMOUNT ||
+             null;
+    }
+
+    // Get currency
+    function getCurrency(booking) {
+      return booking.CURRENCY || booking.currency || booking.Currency || 'EUR';
+    }
+
+    // Get total amount
+    function getTotalAmount(booking) {
+      return booking.calosc || 0;
+    }
+
+    // Calendar state for each apartment
+    let ap1Data = { bookings: [], year: new Date().getFullYear(), month: new Date().getMonth() };
+    let ap2Data = { bookings: [], year: new Date().getFullYear(), month: new Date().getMonth() };
+    let jacuzziData = { bookings: [], year: new Date().getFullYear(), month: new Date().getMonth() };
+    
+    const monthNames = ['Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec', 
+                        'Lipiec', 'Sierpień', 'Wrzesień', 'Pazdziernik', 'Listopad', 'Grudzień'];
+
+    let bookingsToggleState = {
+      ap1: true,
+      ap2: true,
+      jacuzzi: true
+    };
+
+    function toggleBookings(apt) {
+      const containerId = apt === 'ap1' ? 'ap1Bookings' : apt === 'ap2' ? 'ap2Bookings' : 'jacuzziBookings';
+      const btnId = apt === 'ap1' ? 'ap1ToggleBtn' : apt === 'ap2' ? 'ap2ToggleBtn' : 'jacuzziToggleBtn';
+      const container = document.getElementById(containerId);
+      const btn = document.getElementById(btnId);
+
+      bookingsToggleState[apt] = !bookingsToggleState[apt];
+
+      if (bookingsToggleState[apt]) {
+        container.style.display = 'block';
+        btn.textContent = '▼';
+      } else {
+        container.style.display = 'none';
+        btn.textContent = '▶';
+      }
+    }
+
+    function generateCalendarHTML(bookedDates, year, month, apart = null) {
+      // Parse booked dates
+      const bookedRanges = (bookedDates || [])
+        .filter(b => b.Date_Form && b.Date_to)
+        .map(b => ({
+          from: new Date(b.Date_Form),
+          to: new Date(b.Date_to)
+        }));
+      
+      const isDateBooked = (date) => {
+        const dateStr = date.toISOString().split('T')[0];
+        return bookedRanges.some(range => {
+          const fromStr = range.from.toISOString().split('T')[0];
+          const toStr = range.to.toISOString().split('T')[0];
+          return dateStr >= fromStr && dateStr < toStr;
+        });
+      };
+      
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      let html = `<table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:10px">
+        <thead><tr style="background:#667eea;color:white">
+          <th style="padding:4px">Pn</th><th style="padding:4px">Wt</th><th style="padding:4px">Śr</th>
+          <th style="padding:4px">Cz</th><th style="padding:4px">Pt</th><th style="padding:4px">Sb</th>
+          <th style="padding:4px">Nd</th>
+        </tr></thead>
+        <tbody>`;
+      
+      let date = new Date(firstDay);
+      date.setDate(date.getDate() - date.getDay() + 1);
+      
+      while (date <= lastDay || date.getDay() !== 1) {
+        html += '<tr>';
+        for (let i = 0; i < 7; i++) {
+          const isPast = date < today;
+          const isBooked = isDateBooked(date);
+          const isCurrentMonth = date.getMonth() === month;
+          
+          let cellStyle = 'padding:6px;text-align:center;border:1px solid #ddd;';
+          if (!isCurrentMonth) {
+            cellStyle += 'background:#f5f5f5;color:#999;';
+          } else if (isPast) {
+            cellStyle += 'background:#e5e7eb;color:#999;';
+          } else if (isBooked) {
+            cellStyle += 'background:#fed7d7;color:#721c24;font-weight:bold;';
+          } else {
+            cellStyle += 'background:#dcfce7;color:#155724;';
+          }
+          
+          html += `<td style="${cellStyle}">${date.getDate()}</td>`;
+          date.setDate(date.getDate() + 1);
+        }
+        html += '</tr>';
+      }
+      
+      html += `</tbody></table>
+        <div style="font-size:10px;color:#666;margin-top:8px">
+          <span style="color:#155724">● Dostępne</span> | 
+          <span style="color:#721c24">● Zarezerwowane</span>
+        </div>`;
+      
+      return html;
+    }
+
+    function updateCalendarDisplay(apart) {
+      if (apart === 1) {
+        const monthYear = monthNames[ap1Data.month] + ' ' + ap1Data.year;
+        document.getElementById('ap1MonthYear').textContent = monthYear;
+        document.getElementById('calendar1').innerHTML = generateCalendarHTML(ap1Data.bookings, ap1Data.year, ap1Data.month);
+        displayReservationsTable('ap1');
+      } else if (apart === 2) {
+        const monthYear = monthNames[ap2Data.month] + ' ' + ap2Data.year;
+        document.getElementById('ap2MonthYear').textContent = monthYear;
+        document.getElementById('calendar2').innerHTML = generateCalendarHTML(ap2Data.bookings, ap2Data.year, ap2Data.month);
+        displayReservationsTable('ap2');
+      } else if (apart === 'jacuzzi') {
+        const monthYear = monthNames[jacuzziData.month] + ' ' + jacuzziData.year;
+        document.getElementById('jacuzziMonthYear').textContent = monthYear;
+        document.getElementById('jacuzziCalendar').innerHTML = generateCalendarHTML(jacuzziData.bookings, jacuzziData.year, jacuzziData.month);
+        displayReservationsTable('jacuzzi');
+      }
+    }
+
+    function displayReservationsTable(apartment) {
+      let data;
+      let containerId;
+
+      if (apartment === 'ap1') {
+        data = ap1Data;
+        containerId = 'ap1Bookings';
+      } else if (apartment === 'ap2') {
+        data = ap2Data;
+        containerId = 'ap2Bookings';
+      } else {
+        data = jacuzziData;
+        containerId = 'jacuzziBookings';
+      }
+
+      const container = document.getElementById(containerId);
+      
+      // Filter bookings by month
+      const filteredBookings = filterBookingsByMonth(data.bookings, data.year, data.month);
+      
+      if (!filteredBookings || filteredBookings.length === 0) {
+        container.innerHTML = '<p style="color:#999;padding:8px;text-align:center">Brak rezerwacji w tym miesiącu</p>';
+        return;
+      }
+
+      let html = '<table style="width:100%;border-collapse:collapse;cursor:pointer;font-size:10px">';
+      html += '<tr style="background:#e5e7eb;border-bottom:1px solid #999"><th style="padding:6px;text-align:left;font-weight:600">Imię</th><th style="padding:6px;text-align:left;font-weight:600">Nazwisko</th><th style="padding:6px;text-align:left;font-weight:600">Od</th><th style="padding:6px;text-align:left;font-weight:600">Do</th>';
+      if (apartment === 'ap1' || apartment === 'ap2') {
+        html += '<th style="padding:6px;text-align:left;font-weight:600">Jacuzzi</th>';
+      }
+      html += '<th style="padding:6px;text-align:center;font-weight:600">Zaliczka</th><th style="padding:6px;text-align:center;font-weight:600">Pozostało</th></tr>';
+
+      filteredBookings.forEach((booking, idx) => {
+        const dateFrom = new Date(booking.Date_Form);
+        const dateTo = new Date(booking.Date_to);
+        const fromStr = dateFrom.toLocaleDateString('pl-PL');
+        const toStr = dateTo.toLocaleDateString('pl-PL');
+        const jacuzziStr = booking.IS_JACUZZI ? '✓' : '-';
+        
+        // Use helper functions to get deposit info
+        const hasDeposit = hasAdvancePayment(booking);
+        const depositAmount = getAdvanceAmount(booking);
+        const currency = getCurrency(booking);
+        const totalAmount = getTotalAmount(booking);
+        const remainingAmount = Math.max(0, totalAmount - (depositAmount || 0));
+        
+        let depositStr = hasDeposit ? '✓ Tak' : '✗ Nie';
+        let depositColor = hasDeposit ? '#059669' : '#dc2626';
+        
+        // If we have the amount, display it
+        if (hasDeposit && depositAmount) {
+          depositStr = `✓ ${depositAmount} ${currency}`;
+          depositColor = '#059669';
+        } else if (hasDeposit) {
+          depositStr = '✓ Tak';
+          depositColor = '#059669';
+        }
+        
+        // Determine color for remaining amount
+        let remainingColor = '#dc2626'; // red - to pay
+        if (remainingAmount === 0 && totalAmount > 0) {
+          remainingColor = '#059669'; // green - paid
+        } else if (remainingAmount > 0) {
+          remainingColor = '#f59e0b'; // orange - partial
+        }
+        
+        let remainingStr = totalAmount > 0 ? `${remainingAmount.toFixed(2)} ${currency}` : '-';
+        
+        console.log('Booking:', booking.name, booking.surname, 'hasDeposit:', hasDeposit, 'amount:', depositAmount);
+        
+        const uniqueId = apartment + '_' + idx;
+
+        html += `<tr style="border-bottom:1px solid #ddd;background:${idx % 2 === 0 ? '#fff' : '#f9f9f9'};transition:all 0.2s;cursor:pointer" data-booking-id="${uniqueId}" data-apartment="${apartment}" onmouseover="this.style.background='#e8f0ff'" onmouseout="this.style.background='${idx % 2 === 0 ? '#fff' : '#f9f9f9'}'">
+          <td style="padding:6px;font-size:10px">${booking.name || '-'}</td>
+          <td style="padding:6px;font-size:10px">${booking.surname || '-'}</td>
+          <td style="padding:6px;font-size:9px">${fromStr}</td>
+          <td style="padding:6px;font-size:9px">${toStr}</td>`;
+        if (apartment === 'ap1' || apartment === 'ap2') {
+          html += `<td style="padding:6px;text-align:center;font-size:10px">${jacuzziStr}</td>`;
+        }
+        html += `<td style="padding:6px;text-align:center;font-size:9px;font-weight:600;color:${depositColor}">${depositStr}</td>
+        <td style="padding:6px;text-align:center;font-size:9px;font-weight:600;color:${remainingColor};background:${remainingColor === '#059669' ? '#e0f2e0' : remainingColor === '#f59e0b' ? '#fffbeb' : '#fee2e2'}">${remainingStr}</td>
+        </tr>`;
+      });
+
+      html += '</table>';
+      container.innerHTML = html;
+
+      // Add click handlers
+      container.querySelectorAll('tr[data-booking-id]').forEach(row => {
+        row.style.cursor = 'pointer';
+        row.addEventListener('click', () => {
+          const bookingId = row.dataset.bookingId;
+          const apt = row.dataset.apartment;
+          const idx = parseInt(bookingId.split('_')[1]);
+          const booking = filteredBookings[idx];
+          if (booking) {
+            sessionStorage.setItem('currentBooking', JSON.stringify({...booking, _apartment: apt, _index: idx}));
+          }
+          window.location.href = `/booking-details.html?id=${bookingId}&type=${apt}`;
+        });
+      });
+    }
+
+    // Filter bookings to show only those in the selected month
+    function filterBookingsByMonth(bookings, year, month) {
+      if (!bookings) return [];
+      
+      const monthStart = new Date(year, month, 1);
+      const monthEnd = new Date(year, month + 1, 0);
+      
+      return bookings.filter(booking => {
+        const bookingStart = new Date(booking.Date_Form);
+        const bookingEnd = new Date(booking.Date_to);
+        
+        // Show booking if it overlaps with the selected month
+        return bookingStart <= monthEnd && bookingEnd >= monthStart;
+      });
+    }
+
     function renderBookings(containerId, bookings) {
       const container = document.getElementById(containerId);
       if (!bookings || bookings.length === 0) {
@@ -122,31 +446,132 @@
       }
 
       const rows = bookings.map(b => {
-        return `<tr><td>${formatDateDDMMYY(b.date_form)}</td><td>${formatDateDDMMYY(b.date_to)}</td><td>${b.name} ${b.surname}</td><td>${b.is_jacuzzi ? '✅' : ''}</td></tr>`;
+        return `
+          <tr>
+            <td>${b.name || ''}</td>
+            <td>${b.surname || ''}</td>
+            <td>${formatDateDDMMYY(b.date_form)}</td>
+            <td>${formatDateDDMMYY(b.date_to)}</td>
+            <td>${b.is_jacuzzi ? 'Tak' : 'Nie'}</td>
+          </tr>
+        `;
       }).join('');
 
       container.innerHTML = `
         <table>
           <thead>
-            <tr><th>Od</th><th>Do</th><th>Kto</th><th>Jacuzzi</th></tr>
+            <tr>
+              <th>Imię</th>
+              <th>Nazwisko</th>
+              <th>Od</th>
+              <th>Do</th>
+              <th>Jacuzzi</th>
+            </tr>
           </thead>
           <tbody>${rows}</tbody>
         </table>
       `;
     }
 
+    function renderJacBookings(bookings) {
+      const container = document.getElementById('jacuzziInfo');
+      if (!bookings || bookings.length === 0) {
+        container.innerHTML = '✓ Jacuzzi jest dostępne w całym okresie!';
+        return;
+      }
+
+      const html = bookings.map(b => {
+        const from = new Date(b.Date_Form).toLocaleDateString('pl-PL');
+        const to = new Date(b.Date_to).toLocaleDateString('pl-PL');
+        return `<div style="margin:4px 0">🛁 Zarezerwane: ${from} - ${to}</div>`;
+      }).join('');
+
+      container.innerHTML = html || '✓ Jacuzzi jest dostępne!';
+    }
+
     async function loadBookings() {
       try {
-        const [res1, res2] = await Promise.all([
+        const [res1, res2, resJacuzzi] = await Promise.all([
           fetch('/api/bookings?apart=1'),
           fetch('/api/bookings?apart=2'),
+          fetch('/api/jacuzzi-bookings')
         ]);
 
         const data1 = await res1.json();
         const data2 = await res2.json();
+        const dataJacuzzi = await resJacuzzi.json();
 
-        renderBookings('bookings1', data1.bookings);
-        renderBookings('bookings2', data2.bookings);
+        // Debug: sprawdź strukturę danych
+        console.log('Bookings data1:', data1.bookings);
+        if (data1.bookings && data1.bookings.length > 0) {
+          console.log('First booking keys:', Object.keys(data1.bookings[0]));
+          console.log('First booking:', data1.bookings[0]);
+        }
+
+        // Store bookings in state
+        ap1Data.bookings = data1.bookings || [];
+        ap2Data.bookings = data2.bookings || [];
+        jacuzziData.bookings = dataJacuzzi.bookings || [];
+
+        // Initial render
+        updateCalendarDisplay(1);
+        updateCalendarDisplay(2);
+        updateCalendarDisplay('jacuzzi');
+
+        // Add event listeners for navigation
+        document.getElementById('ap1PrevBtn').addEventListener('click', () => {
+          ap1Data.month--;
+          if (ap1Data.month < 0) {
+            ap1Data.month = 11;
+            ap1Data.year--;
+          }
+          updateCalendarDisplay(1);
+        });
+
+        document.getElementById('ap1NextBtn').addEventListener('click', () => {
+          ap1Data.month++;
+          if (ap1Data.month > 11) {
+            ap1Data.month = 0;
+            ap1Data.year++;
+          }
+          updateCalendarDisplay(1);
+        });
+
+        document.getElementById('ap2PrevBtn').addEventListener('click', () => {
+          ap2Data.month--;
+          if (ap2Data.month < 0) {
+            ap2Data.month = 11;
+            ap2Data.year--;
+          }
+          updateCalendarDisplay(2);
+        });
+
+        document.getElementById('ap2NextBtn').addEventListener('click', () => {
+          ap2Data.month++;
+          if (ap2Data.month > 11) {
+            ap2Data.month = 0;
+            ap2Data.year++;
+          }
+          updateCalendarDisplay(2);
+        });
+
+        document.getElementById('jacuzziPrevBtn').addEventListener('click', () => {
+          jacuzziData.month--;
+          if (jacuzziData.month < 0) {
+            jacuzziData.month = 11;
+            jacuzziData.year--;
+          }
+          updateCalendarDisplay('jacuzzi');
+        });
+
+        document.getElementById('jacuzziNextBtn').addEventListener('click', () => {
+          jacuzziData.month++;
+          if (jacuzziData.month > 11) {
+            jacuzziData.month = 0;
+            jacuzziData.year++;
+          }
+          updateCalendarDisplay('jacuzzi');
+        });
       } catch (err) {
         console.error('Error loading bookings:', err);
       }

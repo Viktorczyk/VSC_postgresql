@@ -1,0 +1,770 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Szczegóły rezerwacji</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="stylesheet" href="/.vscode/styles.css">
+  <style>
+    body{background: linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;padding:20px 0}
+    .container{max-width:500px;margin:0 auto;padding:0 16px}
+    .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid #fff;flex-wrap:wrap;gap:12px}
+    .logout-btn{background:#dc2626;color:#fff;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:500}
+    .logout-btn:hover{background:#b91c1c}
+    .user-info{display:flex;align-items:center;gap:12px;font-size:12px;color:#fff;flex-wrap:wrap}
+    .session-timer{display:inline-flex;align-items:center;gap:8px;padding:4px 8px;border-radius:999px;background:rgba(255,255,255,0.2);color:#fff;border:1px solid rgba(255,255,255,0.3);font-size:10px;font-weight:600}
+    .box{background:#fff;padding:20px;border-radius:12px;box-shadow:0 10px 30px rgba(2,6,23,0.15);max-width:500px;width:100%}
+    .detail-group{margin-bottom:16px}
+    .detail-label{font-size:11px;font-weight:600;color:#666;text-transform:uppercase;margin-bottom:4px}
+    .detail-value{font-size:13px;color:#111;padding:8px;background:#f5f5f5;border-radius:6px}
+    .detail-value strong{color:#667eea;font-weight:600}
+    .actions{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap}
+    .btn{padding:10px 16px;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:500;text-decoration:none;display:inline-block;text-align:center}
+    .btn-primary{background:#667eea;color:#fff}
+    .btn-primary:hover{background:#5568d3}
+    .btn-secondary{background:#e5e7eb;color:#111}
+    .btn-secondary:hover{background:#d1d5db}
+    .btn-danger{background:#dc2626;color:#fff}
+    .btn-danger:hover{background:#b91c1c}
+    .btn-success{background:#16a34a;color:#fff}
+    .btn-success:hover{background:#15803d}
+    .loading{text-align:center;padding:40px;color:#999}
+    .error{background:#fed7d7;color:#721c24;padding:12px;border-radius:6px;margin-bottom:16px;font-size:12px}
+    .form-group{margin-bottom:12px}
+    .form-group label{display:block;font-size:11px;font-weight:600;color:#666;text-transform:uppercase;margin-bottom:4px}
+    .form-group input[type="text"],.form-group input[type="email"],.form-group input[type="date"]{width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:13px}
+    .edit-form{display:none;background:#f9f9f9;padding:16px;border-radius:8px;margin-bottom:16px;border:1px solid #e5e7eb}
+    h1{font-size:18px;margin:0}
+    h2{font-size:14px;margin:0 0 12px 0;color:#111}
+    @media (min-width:768px){
+      .header{flex-wrap:nowrap}
+      .user-info{font-size:13px}
+      h1{font-size:20px}
+      h2{font-size:16px}
+      .detail-value{font-size:14px}
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header" style="border-bottom-color:rgba(255,255,255,0.3)">
+      <h1 style="color:#fff;margin:0">Szczegóły rezerwacji</h1>
+      <div class="user-info">
+        <span>👤 <span id="userEmail">...</span></span>
+        <span id="sessionTimer" class="session-timer">Sesja: --:--</span>
+        <button class="logout-btn" onclick="logout()">Wyloguj</button>
+      </div>
+    </div>
+    
+    <div class="box" id="bookingDetails">
+      <div class="loading">Ładowanie szczegółów rezerwacji...</div>
+    </div>
+  </div>
+
+  <script>
+    // Licznik sesji
+    let sessionTimeLeft = 0;
+    let sessionInterval;
+
+    function updateSessionTimer() {
+      const minutes = Math.floor(sessionTimeLeft / 60);
+      const seconds = sessionTimeLeft % 60;
+      const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      
+      document.getElementById('sessionTimer').textContent = `Sesja: ${timeString}`;
+      
+      if (sessionTimeLeft <= 0) {
+        clearInterval(sessionInterval);
+        alert('Sesja wygasła. Zostaniesz przekierowany na stronę logowania.');
+        window.location.href = '/login.html';
+      }
+      sessionTimeLeft--;
+    }
+
+    function startSessionTimer() {
+      updateSessionTimer();
+      sessionInterval = setInterval(updateSessionTimer, 1000);
+    }
+
+    // Załaduj informacje o zalogowanym użytkowniku
+    async function loadUserInfo() {
+      try {
+        const response = await fetch('/api/user');
+        const data = await response.json();
+        if (data.logged) {
+          document.getElementById('userEmail').textContent = data.email;
+          sessionTimeLeft = data.sessionTimeLeft || (15 * 60);
+          startSessionTimer();
+          loadBookingDetails();
+        } else {
+          window.location.href = '/login.html';
+        }
+      } catch (err) {
+        console.error('Error loading user info:', err);
+      }
+    }
+
+    // Wylogowanie
+    function logout() {
+      if (confirm('Czy na pewno chcesz się wylogować?')) {
+        window.location.href = '/api/logout';
+      }
+    }
+
+    // Załaduj szczegóły rezerwacji
+    async function loadBookingDetails() {
+      const params = new URLSearchParams(window.location.search);
+      const bookingId = params.get('id');
+      const type = params.get('type');
+
+      // Spróbuj pobrać rezerwację z sessionStorage (przekazana z głównej strony)
+      const storedBooking = sessionStorage.getItem('currentBooking');
+      if (storedBooking) {
+        try {
+          const booking = JSON.parse(storedBooking);
+          displayBookingDetails(booking, type);
+          sessionStorage.removeItem('currentBooking'); // Czyść po użyciu
+          return;
+        } catch (err) {
+          console.error('Error parsing stored booking:', err);
+        }
+      }
+
+      // Fallback: pobierz wszystkie rezerwacje i szukaj po indeksie
+      if (!bookingId || !type) {
+        document.getElementById('bookingDetails').innerHTML = '<div class="error">Brakuje parametrów rezerwacji</div>';
+        return;
+      }
+
+      try {
+        let url = '';
+        if (type === 'ap1') {
+          url = '/api/bookings?apart=1';
+        } else if (type === 'ap2') {
+          url = '/api/bookings?apart=2';
+        } else if (type === 'jacuzzi') {
+          url = '/api/jacuzzi-bookings';
+        }
+
+        const response = await fetch(url);
+        const data = await response.json();
+        const idx = parseInt(bookingId.split('_')[1]);
+        const booking = (data.bookings || [])[idx];
+
+        if (!booking) {
+          document.getElementById('bookingDetails').innerHTML = '<div class="error">Rezerwacja nie znaleziona (indeks: ' + idx + ')</div>';
+          return;
+        }
+
+        displayBookingDetails(booking, type);
+      } catch (err) {
+        console.error('Error loading booking details:', err);
+        document.getElementById('bookingDetails').innerHTML = '<div class="error">Błąd ładowania: ' + err.message + '</div>';
+      }
+    }
+
+    function displayBookingDetails(booking, type) {
+      const dateFrom = new Date(booking.Date_Form);
+      const dateTo = new Date(booking.Date_to);
+      const fromStr = dateFrom.toLocaleDateString('pl-PL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      const toStr = dateTo.toLocaleDateString('pl-PL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+      // Debug booking data
+      console.log('Booking details:', booking);
+      console.log('Booking keys:', Object.keys(booking));
+
+      let aptName = 'Apartament 1';
+      if (type === 'ap2') aptName = 'Apartament 2';
+      if (type === 'jacuzzi') aptName = 'Jacuzzi';
+
+      // Check for advance payment using multiple possible field names
+      const hasDeposit = booking.IS_advance_payment || 
+                         booking.is_advance_payment || 
+                         booking.advance_payment ||
+                         booking.IS_ADVANCE_PAYMENT ||
+                         false;
+      
+      const depositAmount = booking.amount_advance_payment || 
+                           booking.advance_amount || 
+                           booking.amount || 
+                           booking.ADVANCE_AMOUNT ||
+                           null;
+      
+      const currency = booking.CURRENCY || booking.currency || booking.Currency || 'EUR';
+
+      console.log('Has deposit:', hasDeposit, 'Amount:', depositAmount, 'Currency:', currency);
+
+      let html = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <h2>${aptName}</h2>
+          <button class="btn btn-secondary" style="padding:6px 12px;font-size:11px" onclick="toggleDetails()" id="toggleBtn">▲ Szczegóły</button>
+        </div>
+        
+        <div id="detailsContent" style="display:block">
+          <div class="detail-group">
+            <div class="detail-label">Imię</div>
+            <div class="detail-value">${booking.name || '-'}</div>
+          </div>
+
+          <div class="detail-group">
+            <div class="detail-label">Nazwisko</div>
+            <div class="detail-value">${booking.surname || '-'}</div>
+          </div>
+
+          <div class="detail-group">
+            <div class="detail-label">Email</div>
+            <div class="detail-value">${booking.email || '-'}</div>
+          </div>
+
+          <div class="detail-group">
+            <div class="detail-label">Do rezerwacji</div>
+            <div class="detail-value"><strong>Od:</strong> ${fromStr}</div>
+          </div>
+
+          <div class="detail-group">
+            <div class="detail-label"></div>
+            <div class="detail-value"><strong>Do:</strong> ${toStr}</div>
+          </div>
+      `;
+
+      if (type === 'ap1' || type === 'ap2') {
+        const days = Math.ceil((dateTo - dateFrom) / (1000 * 60 * 60 * 24));
+        html += `
+          <div class="detail-group">
+            <div class="detail-label">Liczba nocy</div>
+            <div class="detail-value"><strong>${days}</strong> nocy</div>
+          </div>
+        `;
+
+        if (booking.IS_JACUZZI) {
+          html += `
+            <div class="detail-group">
+              <div class="detail-label">Jacuzzi</div>
+              <div class="detail-value" style="background:#dcfce7;color:#155724"><strong>✓ Zarezerwane</strong></div>
+            </div>
+          `;
+        }
+      }
+
+      if (hasDeposit) {
+        // If we have the amount, display it
+        if (depositAmount) {
+          html += `
+            <div class="detail-group">
+              <div class="detail-label">Zaliczka</div>
+              <div class="detail-value" style="background:#dcfce7;color:#155724;font-weight:bold;font-size:14px">
+                <strong>✓ ${depositAmount} ${currency}</strong>
+                <div style="font-size:10px;color:#666;margin-top:4px;font-weight:normal">Wpłacona awansowo</div>
+              </div>
+            </div>
+          `;
+        } else {
+          html += `
+            <div class="detail-group">
+              <div class="detail-label">Zaliczka</div>
+              <div class="detail-value" style="background:#dcfce7;color:#155724;font-weight:bold">
+                <strong>✓ Wpłacona</strong>
+              </div>
+            </div>
+          `;
+        }
+      } else {
+        html += `
+          <div class="detail-group">
+            <div class="detail-label">Zaliczka</div>
+            <div class="detail-value" style="background:#fee2e2;color:#991b1b">✗ Brak zaliczki</div>
+          </div>
+        `;
+      }
+
+      // Display new fields: ilosc_osob, calosc, pozostalo_do_zaplaty
+      const iloscOsob = booking.ilosc_osob || 1;
+      const caloscAmount = booking.calosc || 0;
+      const advancePayment = booking.amount_advance_payment || 0;
+      const pozostaloDoZaplaty = caloscAmount - advancePayment;
+
+      if (iloscOsob) {
+        html += `
+          <div class="detail-group">
+            <div class="detail-label">Liczba osób</div>
+            <div class="detail-value"><strong>${iloscOsob}</strong> osób</div>
+          </div>
+        `;
+      }
+
+      if (caloscAmount > 0) {
+        html += `
+          <div class="detail-group">
+            <div class="detail-label">Całość do zapłaty</div>
+            <div class="detail-value"><strong>${caloscAmount}</strong> ${currency}</div>
+          </div>
+        `;
+      }
+
+      if (caloscAmount > 0) {
+        html += `
+          <div class="detail-group">
+            <div class="detail-label">Pozostało do zapłaty</div>
+            <div class="detail-value" style="background:#${pozostaloDoZaplaty > 0 ? 'fef3c7;color:#92400e' : 'dcfce7;color:#155724'};font-weight:bold">
+              <strong>${Math.max(0, pozostaloDoZaplaty)}</strong> ${currency}
+              <div style="font-size:10px;color:#666;margin-top:4px;font-weight:normal">${Math.max(0, pozostaloDoZaplaty) === 0 ? 'Opłacone w pełni' : 'Do zapłacenia'}</div>
+            </div>
+          </div>
+        `;
+      }
+
+      if (booking.id) {
+        html += `
+          <div class="detail-group">
+            <div class="detail-label">ID rezerwacji</div>
+            <div class="detail-value">#${booking.id}</div>
+          </div>
+        `;
+      }
+
+      html += `
+        </div>
+
+        <div id="editForm" class="edit-form">
+          <h3 style="margin:0 0 12px 0;color:#111;font-size:14px">Edytuj rezerwację</h3>
+          <div class="form-group">
+            <label>Imię</label>
+            <input type="text" id="editName" placeholder="Imię" value="${booking.name || ''}">
+          </div>
+          <div class="form-group">
+            <label>Nazwisko</label>
+            <input type="text" id="editSurname" placeholder="Nazwisko" value="${booking.surname || ''}">
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="editEmail" placeholder="Email" value="${booking.email || ''}">
+          </div>
+          <div class="form-group">
+            <label>Całość do zapłaty</label>
+            <input type="number" id="editCalosc" placeholder="0" value="${booking.calosc || ''}" step="0.01">
+          </div>
+          <div class="form-group">
+            <label>Ilość osób</label>
+            <input type="number" id="editIloscOsob" placeholder="1" value="${booking.ilosc_osob || ''}" min="1">
+          </div>
+          <div style="background:#f9f9f9;padding:10px;border-radius:6px;margin-bottom:12px;border:1px solid #e5e7eb">
+            <h4 style="margin:0 0 8px 0;font-size:12px;font-weight:600;color:#666">📅 Dostępne terminy</h4>
+            <div id="editCalendar" style="font-size:11px;overflow-x:auto"></div>
+          </div>
+          <div class="form-group">
+            <label>Data od</label>
+            <input type="date" id="editDateFrom" value="${booking.Date_Form || ''}" onchange="checkAvailability('${type}')">
+          </div>
+          <div class="form-group">
+            <label>Data do</label>
+            <input type="date" id="editDateTo" value="${booking.Date_to || ''}" onchange="checkAvailability('${type}')">
+          </div>
+          <div id="availabilityCheck" style="background:#f0f0f0;padding:10px;border-radius:6px;margin-bottom:12px;border-left:3px solid #667eea;font-size:12px;display:none"></div>
+          <div style="background:#f0f0f0;padding:10px;border-radius:6px;margin-bottom:12px;border-left:3px solid #667eea">
+            <label style="display:flex;align-items:center;gap:8px;margin:0;cursor:pointer">
+              <input type="checkbox" id="editHasDeposit" ${hasDeposit ? 'checked' : ''}>
+              <span style="font-size:11px;font-weight:600;color:#666;text-transform:uppercase">Zaliczka</span>
+            </label>
+            <div id="depositFields" style="display:${hasDeposit ? 'block' : 'none'};margin-top:8px">
+              <div class="form-group" style="margin-bottom:8px">
+                <label>Kwota</label>
+                <input type="number" id="editDepositAmount" placeholder="150" value="${depositAmount || ''}" step="0.01">
+              </div>
+              <div class="form-group">
+                <label>Waluta</label>
+                <select id="editDepositCurrency" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:13px">
+                  <option value="PLN" ${currency === 'PLN' ? 'selected' : ''}>PLN</option>
+                  <option value="EUR" ${currency === 'EUR' ? 'selected' : ''}>EUR</option>
+                  <option value="USD" ${currency === 'USD' ? 'selected' : ''}>USD</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div id="editCalculatorPreview" style="background:#f0f9ff;border:1px solid #c7d4ff;border-radius:8px;padding:12px;margin-bottom:12px;display:none">
+            <div style="font-size:10px;color:#666;margin-bottom:8px;font-weight:600;text-transform:uppercase">📊 Podsumowanie:</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:11px">
+              <div style="background:white;padding:8px;border-radius:6px">
+                <div style="color:#999;margin-bottom:4px">Całość:</div>
+                <div style="font-size:14px;font-weight:600;color:#667eea"><span id="editPreviewCalosc">0</span> <span id="editPreviewCurrency">PLN</span></div>
+              </div>
+              <div style="background:white;padding:8px;border-radius:6px">
+                <div style="color:#999;margin-bottom:4px">Zaliczka:</div>
+                <div style="font-size:14px;font-weight:600;color:#059669"><span id="editPreviewZaliczka">0</span> <span id="editPreviewCurrency2">PLN</span></div>
+              </div>
+              <div style="background:white;padding:8px;border-radius:6px;grid-column:1/-1">
+                <div style="color:#999;margin-bottom:4px">Pozostało do zapłaty:</div>
+                <div style="font-size:16px;font-weight:700;color:#dc2626"><span id="editPreviewPozostalo">0</span> <span id="editPreviewCurrency3">PLN</span></div>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-success" onclick="saveBookingChanges('${type}', ${booking.id})">✓ Zapisz zmiany</button>
+            <button class="btn btn-secondary" onclick="toggleEditForm()">✗ Anuluj edycję</button>
+          </div>
+        </div>
+
+        <div class="actions">
+          <a href="/bookings_choose.html" class="btn btn-secondary">← Wróć</a>
+          <button class="btn btn-primary" onclick="toggleEditForm()" id="editBtn">✏️ Edytuj</button>
+          <button class="btn btn-danger" onclick="cancelBooking()">Anuluj rezerwację</button>
+        </div>
+      `;
+
+      document.getElementById('bookingDetails').innerHTML = html;
+      
+      // Store current booking data for availability checking
+      if (booking && booking.id) {
+        setCurrentBookingData(booking, type);
+      }
+    }
+
+    function toggleDetails() {
+      const detailsContent = document.getElementById('detailsContent');
+      const toggleBtn = document.getElementById('toggleBtn');
+      
+      if (detailsContent.style.display === 'none') {
+        detailsContent.style.display = 'block';
+        toggleBtn.textContent = '▲ Szczegóły';
+      } else {
+        detailsContent.style.display = 'none';
+        toggleBtn.textContent = '▼ Szczegóły';
+      }
+    }
+
+    function toggleEditForm() {
+      const editForm = document.getElementById('editForm');
+      if (editForm.style.display === 'none') {
+        editForm.style.display = 'block';
+        // Display calendar when edit form opens
+        displayEditCalendar();
+      } else {
+        editForm.style.display = 'none';
+      }
+    }
+
+    async function displayEditCalendar() {
+      const apart = currentBookingType === 'ap1' ? 1 : currentBookingType === 'ap2' ? 2 : 0;
+      const calendarContainer = document.getElementById('editCalendar');
+      
+      if (!calendarContainer || apart === 0) return;
+
+      try {
+        const response = await fetch(`/api/bookings?apart=${apart}`);
+        const data = await response.json();
+        const bookings = data.bookings || [];
+
+        const today = new Date();
+        const month = today.getMonth();
+        const year = today.getFullYear();
+
+        // Get all booked dates
+        const bookedDates = [];
+        bookings.forEach(booking => {
+          if (currentBookingData && booking.id === currentBookingData.id) {
+            return; // Skip current booking
+          }
+          const from = new Date(booking.Date_Form);
+          const to = new Date(booking.Date_to);
+          for (let d = new Date(from); d < to; d.setDate(d.getDate() + 1)) {
+            bookedDates.push(d.toISOString().split('T')[0]);
+          }
+        });
+
+        // Generate calendar
+        let html = '<table style="width:100%;border-collapse:collapse;font-size:9px;margin-bottom:8px"><thead><tr style="background:#667eea;color:white">';
+        const days = ['Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'Sb', 'Nd'];
+        days.forEach(d => html += `<th style="padding:4px">${d}</th>`);
+        html += '</tr></thead><tbody>';
+
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        let date = new Date(firstDay);
+        date.setDate(date.getDate() - date.getDay() + 1);
+
+        while (date <= lastDay || date.getDay() !== 1) {
+          html += '<tr>';
+          for (let i = 0; i < 7; i++) {
+            const isCurrentMonth = date.getMonth() === month;
+            const isBooked = bookedDates.includes(date.toISOString().split('T')[0]);
+            const isCurrent = currentBookingData && (
+              (date >= new Date(currentBookingData.Date_Form) && date < new Date(currentBookingData.Date_to))
+            );
+
+            let cellStyle = 'padding:3px;text-align:center;border:1px solid #ddd;';
+            if (!isCurrentMonth) {
+              cellStyle += 'background:#f5f5f5;color:#999;';
+            } else if (isCurrent) {
+              cellStyle += 'background:#fef3c7;color:#92400e;font-weight:bold;';
+            } else if (isBooked) {
+              cellStyle += 'background:#fed7d7;color:#721c24;';
+            } else {
+              cellStyle += 'background:#dcfce7;color:#155724;';
+            }
+
+            html += `<td style="${cellStyle}">${date.getDate()}</td>`;
+            date.setDate(date.getDate() + 1);
+          }
+          html += '</tr>';
+        }
+
+        html += '</tbody></table>';
+        html += '<div style="font-size:9px;margin-top:6px">';
+        html += '<span style="color:#155724">● Dostępne</span> | ';
+        html += '<span style="color:#92400e">● Twoja rezerwacja</span> | ';
+        html += '<span style="color:#721c24">● Zarezerwowane</span>';
+        html += '</div>';
+
+        calendarContainer.innerHTML = html;
+      } catch (err) {
+        console.error('Error displaying calendar:', err);
+        calendarContainer.innerHTML = '<span style="color:#666">Błąd ładowania kalendarza</span>';
+      }
+    }
+
+    // Toggle deposit fields visibility and update calculator
+    document.addEventListener('DOMContentLoaded', () => {
+      const depositCheckbox = document.getElementById('editHasDeposit');
+      if (depositCheckbox) {
+        depositCheckbox.addEventListener('change', (e) => {
+          const depositFields = document.getElementById('depositFields');
+          if (depositFields) {
+            depositFields.style.display = e.target.checked ? 'block' : 'none';
+          }
+          updateEditCalculator();
+        });
+      }
+
+      // Add calculator event listeners
+      const editCaloscInput = document.getElementById('editCalosc');
+      const editDepositAmount = document.getElementById('editDepositAmount');
+      const editDepositCurrency = document.getElementById('editDepositCurrency');
+
+      if (editCaloscInput) {
+        editCaloscInput.addEventListener('input', updateEditCalculator);
+      }
+      if (editDepositAmount) {
+        editDepositAmount.addEventListener('input', updateEditCalculator);
+      }
+      if (editDepositCurrency) {
+        editDepositCurrency.addEventListener('change', updateEditCalculator);
+      }
+
+      // Initial calculator state
+      updateEditCalculator();
+    });
+
+    // Store booking data for availability checking
+    function updateEditCalculator() {
+      const caloscInput = document.getElementById('editCalosc');
+      const zaliczkaInput = document.getElementById('editDepositAmount');
+      const currencySelect = document.getElementById('editDepositCurrency');
+      const calculatorPreview = document.getElementById('editCalculatorPreview');
+
+      if (!caloscInput || !zaliczkaInput) return;
+
+      const calosc = parseFloat(caloscInput.value) || 0;
+      const zaliczka = parseFloat(zaliczkaInput.value) || 0;
+      const pozostalo = Math.max(0, calosc - zaliczka);
+      const currency = currencySelect ? currencySelect.value : 'PLN';
+
+      // Update preview
+      document.getElementById('editPreviewCalosc').textContent = calosc.toFixed(2);
+      document.getElementById('editPreviewZaliczka').textContent = zaliczka.toFixed(2);
+      document.getElementById('editPreviewPozostalo').textContent = pozostalo.toFixed(2);
+      
+      // Update all currency displays
+      document.getElementById('editPreviewCurrency').textContent = currency;
+      document.getElementById('editPreviewCurrency2').textContent = currency;
+      document.getElementById('editPreviewCurrency3').textContent = currency;
+
+      // Show calculator only if there are values
+      if (calculatorPreview) {
+        if (calosc > 0 || zaliczka > 0) {
+          calculatorPreview.style.display = 'block';
+        } else {
+          calculatorPreview.style.display = 'none';
+        }
+      }
+    }
+
+    let currentBookingData = null;
+    let currentBookingType = null;
+
+    function setCurrentBookingData(data, type) {
+      currentBookingData = data;
+      currentBookingType = type;
+    }
+
+    async function checkAvailability(type) {
+      const dateFrom = document.getElementById('editDateFrom').value;
+      const dateTo = document.getElementById('editDateTo').value;
+      const availCheck = document.getElementById('availabilityCheck');
+
+      if (!dateFrom || !dateTo) {
+        availCheck.style.display = 'none';
+        return;
+      }
+
+      if (new Date(dateTo) <= new Date(dateFrom)) {
+        availCheck.innerHTML = '<span style="color:#dc2626">❌ Data "do" musi być późniejsza niż data "od"</span>';
+        availCheck.style.display = 'block';
+        return;
+      }
+
+      try {
+        // Fetch all bookings for this apartment
+        const apart = type === 'ap1' ? 1 : type === 'ap2' ? 2 : 0;
+        let bookings = [];
+
+        if (apart > 0) {
+          const response = await fetch(`/api/bookings?apart=${apart}`);
+          const data = await response.json();
+          bookings = data.bookings || [];
+        }
+
+        // Check for conflicts (excluding current booking)
+        const fromDate = new Date(dateFrom);
+        const toDate = new Date(dateTo);
+        let hasConflict = false;
+        let conflictList = '';
+
+        bookings.forEach(booking => {
+          if (currentBookingData && booking.id === currentBookingData.id) {
+            return; // Skip current booking
+          }
+
+          const bookingFrom = new Date(booking.Date_Form);
+          const bookingTo = new Date(booking.Date_to);
+
+          if ((fromDate < bookingTo) && (toDate > bookingFrom)) {
+            hasConflict = true;
+            conflictList += `<div style="margin-top:4px">⚠️ ${booking.name} ${booking.surname}: ${booking.Date_Form} - ${booking.Date_to}</div>`;
+          }
+        });
+
+        if (hasConflict) {
+          availCheck.innerHTML = `<span style="color:#dc2626;font-weight:bold">❌ Konflikt z innymi rezerwacjami:</span>${conflictList}`;
+          availCheck.style.color = '#dc2626';
+        } else {
+          availCheck.innerHTML = '<span style="color:#16a34a;font-weight:bold">✅ Daty są dostępne</span>';
+          availCheck.style.color = '#16a34a';
+        }
+        availCheck.style.display = 'block';
+      } catch (err) {
+        console.error('Error checking availability:', err);
+      }
+    }
+
+    async function saveBookingChanges(type, bookingId) {
+      const name = document.getElementById('editName').value;
+      const surname = document.getElementById('editSurname').value;
+      const email = document.getElementById('editEmail').value;
+      const dateFrom = document.getElementById('editDateFrom').value;
+      const dateTo = document.getElementById('editDateTo').value;
+      const calosc = document.getElementById('editCalosc').value;
+      const ilosc_osob = document.getElementById('editIloscOsob').value;
+      const hasDeposit = document.getElementById('editHasDeposit').checked;
+      const depositAmount = hasDeposit ? document.getElementById('editDepositAmount').value : null;
+      const depositCurrency = hasDeposit ? document.getElementById('editDepositCurrency').value : null;
+
+      if (!name || !surname || !dateFrom || !dateTo) {
+        alert('Wszystkie pola są wymagane');
+        return;
+      }
+
+      if (new Date(dateTo) <= new Date(dateFrom)) {
+        alert('Data "do" musi być późniejsza niż data "od"');
+        return;
+      }
+
+      try {
+        const endpoint = type === 'ap1' ? '/api/booking/ap1/update' : 
+                         type === 'ap2' ? '/api/booking/ap2/update' : 
+                         '/api/booking/jacuzzi/update';
+
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            id: bookingId,
+            name,
+            surname,
+            email,
+            Date_Form: dateFrom,
+            Date_to: dateTo,
+            IS_advance_payment: hasDeposit,
+            amount_advance_payment: hasDeposit ? Number(depositAmount) : 0,
+            CURRENCY: depositCurrency || 'EUR',
+            calosc: Number(calosc) || 0,
+            ilosc_osob: Number(ilosc_osob) || 1
+          })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          alert('Rezerwacja została zaktualizowana!');
+          toggleEditForm();
+          // Reload page to refresh calendar
+          setTimeout(() => {
+            window.location.reload();
+          }, 500);
+        } else {
+          alert('Błąd: ' + (data.error || 'Nie udało się zaktualizować rezerwacji'));
+        }
+      } catch (err) {
+        console.error('Error saving changes:', err);
+        alert('Błąd serwera: ' + err.message);
+      }
+    }
+
+    function cancelBooking() {
+      if (confirm('Czy na pewno chcesz ANULOWAĆ tę rezerwację? Ta czynność nie może być odwrócona.\n\nJeśli masz również rezerwację Jacuzzi na te daty, będzie ona również anulowana.')) {
+        cancelBookingAPI();
+      }
+    }
+
+    async function cancelBookingAPI() {
+      if (!currentBookingData || !currentBookingType) {
+        alert('Błąd: brakuje danych rezerwacji');
+        return;
+      }
+
+      try {
+        const endpoint = currentBookingType === 'ap1' ? '/api/booking/ap1/cancel' : 
+                         currentBookingType === 'ap2' ? '/api/booking/ap2/cancel' : 
+                         '/api/booking/jacuzzi/cancel';
+
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            id: currentBookingData.id
+          })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          alert('✓ Rezerwacja została anulowana!\n(Powiązana rezerwacja Jacuzzi również została anulowana)');
+          // Redirect to bookings list
+          setTimeout(() => {
+            window.location.href = '/bookings_choose.html';
+          }, 500);
+        } else {
+          alert('Błąd: ' + (data.error || 'Nie udało się anulować rezerwacji'));
+        }
+      } catch (err) {
+        console.error('Error canceling booking:', err);
+        alert('Błąd serwera: ' + err.message);
+      }
+    }
+
+    loadUserInfo();
+  </script>
+</body>
+</html>

@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node .vscode/index.js"
+    "start": "node .vscode/index.js",
+    "setup-db": "node .vscode/setup-db.js",
+    "dev": "npm run setup-db && npm start"
   },
   "repository": {
     "type": "git",

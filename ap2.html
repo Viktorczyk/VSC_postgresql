@@ -1,319 +1,655 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="pl">
 <head>
-  <meta charset="utf-8">
-  <title>Rezerwacja — Apartament 2</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <link rel="stylesheet" href="/.vscode/styles.css">
-  <style>
-    .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid #e6eefb}
-    .user-info{display:flex;align-items:center;gap:12px;font-size:14px}
-    .logout-btn{background:#dc2626;color:#fff;border:none;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500}
-    .logout-btn:hover{background:#b91c1c}
-    .session-timer{display:inline-flex;align-items:center;gap:8px;padding:4px 10px;border-radius:999px;background:#eef3ff;color:#1a3a7b;border:1px solid #c7d4ff;font-size:12px;font-weight:600}
-    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.35);display:none;align-items:center;justify-content:center;z-index:999}
-    .modal{background:#fff;padding:20px;border-radius:14px;box-shadow:0 20px 50px rgba(0,0,0,0.15);width:min(420px,calc(100% - 40px));}
-    .modal h2{margin-top:0;font-size:18px;color:#0b1f3a}
-    .modal .modal-row{display:flex;gap:10px;margin-bottom:12px}
-    .modal input[type=date]{flex:1;padding:8px 10px;border:1px solid #c8d3e8;border-radius:8px}
-    .modal button{padding:10px 14px;border:none;border-radius:8px;cursor:pointer;font-weight:600}
-    .modal .close-btn{background:#f3f4f6;color:#1f2937;margin-right:8px}
-    .modal .check-btn{background:#2563eb;color:#fff}
-    .modal .modal-status{margin-top:10px;font-size:13px}
-    .jac-bookings{margin-top:14px;font-size:13px}
-    .jac-bookings table{width:100%;border-collapse:collapse;font-size:13px}
-    .jac-bookings th,.jac-bookings td{padding:6px 8px;border:1px solid #d1d5db;text-align:left}
-    .jac-bookings th{background:#f3f4f6;color:#111;font-weight:600}
-    .jac-bookings .apart1{background:#e0f2ff}
-    .jac-bookings .apart2{background:#e6ffed}
-    .jac-bookings .no-bookings{padding:10px;text-align:center;color:#4b5563;background:#f9fafb;border-radius:8px}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rezerwacja Apartament 2</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 8px; display: flex; justify-content: center; align-items: center; }
+        .container { background: white; border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.2); width: 100%; max-width: 100%; padding: 8px; max-height: 95vh; overflow-y: auto; }
+        h1 { color: #333; margin-bottom: 3px; font-size: 17px; }
+        .subtitle { color: #666; margin-bottom: 10px; font-size: 10px; }
+        .form-group { margin-bottom: 8px; }
+        label { display: block; margin-bottom: 3px; color: #333; font-weight: 500; font-size: 10px; }
+        input, select { width: 100%; padding: 7px; border: 2px solid #e0e0e0; border-radius: 5px; font-size: 11px; font-family: inherit; transition: border-color 0.3s; }
+        input:focus, select:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 2px rgba(102,126,234,0.1); }
+        input:invalid { border-color: #dc3545; }
+        input[readonly] { background: #f5f5f5; cursor: not-allowed; }
+        .checkbox-group { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+        input[type="checkbox"] { width: 13px; height: 13px; cursor: pointer; accent-color: #667eea; flex-shrink: 0; }
+        .checkbox-label { cursor: pointer; font-size: 10px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 0; }
+        .button-group { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+        button { padding: 7px 10px; border: none; border-radius: 5px; font-size: 11px; font-weight: 600; cursor: pointer; width: 100%; transition: all 0.3s; }
+        .btn-submit { background: #667eea; color: white; }
+        .btn-submit:hover:not(:disabled) { background: #5568d3; }
+        .btn-submit:disabled { background: #ccc; cursor: not-allowed; }
+        .btn-cancel { background: #f0f0f0; color: #333; }
+        .btn-cancel:hover { background: #e0e0e0; }
+        .alert { padding: 6px; border-radius: 5px; margin-bottom: 8px; display: none; font-size: 10px; }
+        .alert.show { display: block; }
+        .alert-error { background: #fee; color: #c33; border: 1px solid #fcc; }
+        .alert-success { background: #e8f8f5; color: #00a86b; border: 1px solid #00b894; }
+        .loader { display: none; text-align: center; margin-bottom: 8px; }
+        .loader.show { display: block; }
+        .spinner { border: 2px solid #f3f3f3; border-top: 2px solid #667eea; border-radius: 50%; width: 16px; height: 16px; animation: spin 1s linear infinite; margin: 0 auto 4px; }
+        .loader p { font-size: 10px; color: #666; }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center; padding: 10px; overflow-y: auto; }
+        .modal.show { display: flex; }
+        .modal-content { background-color: white; padding: 12px; border-radius: 10px; width: 100%; max-width: 450px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); max-height: 90vh; overflow-y: auto; }
+        .modal-header { font-size: 13px; font-weight: 600; margin-bottom: 10px; color: #333; }
+        .modal-body { font-size: 11px; margin-bottom: 10px; color: #666; }
+        .calendar { width: 100%; border-collapse: collapse; font-size: 10px; margin: 8px 0; }
+        .calendar th { background: #667eea; color: white; padding: 5px; text-align: center; font-size: 9px; }
+        .calendar td { border: 1px solid #ddd; padding: 4px; text-align: center; cursor: pointer; font-size: 10px; }
+        .calendar .available { background: #d4edda; color: #155724; }
+        .calendar .booked { background: #f8d7da; color: #721c24; cursor: not-allowed; }
+        .calendar .selected { background: #667eea; color: white; font-weight: 600; }
+        .calendar .empty { background: white; cursor: default; }
+        .modal-buttons { display: flex; gap: 8px; }
+        .modal-buttons button { padding: 7px 12px; font-size: 11px; }
+        #selectedDates, #jacuzziSelectedDates { font-size: 11px; color: #333; padding: 8px; background: #f9f9f9; border-radius: 4px; display: block; margin-bottom: 8px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        @media screen and (min-width: 769px) {
+            body { padding: 15px; }
+            .container { max-width: 600px; padding: 20px; }
+            h1 { font-size: 22px; margin-bottom: 5px; }
+            .subtitle { font-size: 12px; margin-bottom: 15px; }
+            .form-group { margin-bottom: 14px; }
+            label { font-size: 12px; margin-bottom: 5px; }
+            input, select { padding: 9px; font-size: 13px; }
+            .checkbox-group { margin-bottom: 14px; }
+            input[type="checkbox"] { width: 16px; height: 16px; }
+            .checkbox-label { font-size: 12px; }
+            .form-row { gap: 12px; }
+            .button-group { gap: 12px; margin-top: 16px; }
+            button { padding: 9px 14px; font-size: 12px; }
+            .alert { padding: 10px; font-size: 12px; }
+            .modal-content { max-width: 500px; padding: 16px; }
+            .modal-header { font-size: 14px; margin-bottom: 12px; }
+            .modal-body { font-size: 12px; }
+            .calendar { font-size: 11px; }
+            .calendar th { padding: 7px; }
+            .calendar td { padding: 6px; }
+        }
+    </style>
 </head>
 <body>
-  <div class="header">
-    <h1 style="margin:0">Rezerwacja — Apartament 2</h1>
-    <div class="user-info">
-      <span>👤 <span id="userEmail">...</span></span>
-      <span id="sessionTimer" style="font-size:12px;color:#666;margin-right:10px">Sesja: --:--</span>
-      <button class="logout-btn" onclick="logout()">Wyloguj</button>
-    </div>
-  </div>
-
-  <div class="card">
-    <form id="apForm2" method="post" action="/booking/ap2">
-      <div class="row" style="flex-direction:column">
-      <div class="col"><label>Email<input name="email" type="email" required></label></div>
-      <div class="col"><label>Imię<input name="name" type="text" required></label></div>
-      <div class="col"><label>Nazwisko<input name="surname" type="text" required></label></div>
-    </div>
-
-    <div class="date-row">
-      <div class="col"><label>Termin od<input name="Date_Form" type="date" required></label></div>
-      <div class="col"><label>Termin do<input name="Date_to" type="date" required></label></div>
-    </div>
-
-    <div class="row" style="flex-direction:column; gap:10px;">
-      <label style="display:flex;align-items:center;gap:10px"><input id="advanceCheck" type="checkbox" name="IS_advance_payment" value="1"> Zaliczka</label>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-        <label style="flex:1"><span>Ilość zaliczki</span><input id="advanceAmount" name="amount_advance_payment" type="number" min="0" step="1" placeholder="0"></label>
-        <label style="width:140px">Waluta<select name="CURRENCY">
-          <option value="PLN" selected>PLN</option>
-          <option value="EUR">EUR</option>
-          <option value="USD">USD</option>
-        </select></label>
-      </div>
-    </div>
-
-    <label><input id="jacCheck2" type="checkbox" name="IS_JACUZZI" value="1"> Chcę jacuzzi</label>
-      <div id="jacStatus2" class="avail" style="display:none"></div>
-
-      <div id="jacModal" class="modal-overlay" onclick="closeJacModal(event)">
-        <div class="modal" onclick="event.stopPropagation()">
-          <h2>Sprawdź dostępność jacuzzi</h2>
-          <div class="modal-row">
-            <input id="jacFrom" type="date" />
-            <input id="jacTo" type="date" />
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #e0e0e0; flex-wrap: wrap; gap: 8px;">
+          <h1>Rezerwacja Apartament 2</h1>
+          <div style="display: flex; align-items: center; gap: 8px; font-size: 10px;">
+            <span>👤 <span id="userEmail" style="font-weight: 500;">...</span></span>
+            <span id="sessionTimer" style="display: inline-flex; align-items: center; gap: 6px; padding: 3px 6px; border-radius: 999px; background: rgba(102, 126, 234, 0.1); color: #667eea; border: 1px solid rgba(102, 126, 234, 0.3); font-size: 9px; font-weight: 600;">Sesja: --:--</span>
+            <button type="button" onclick="logout()" style="background: #dc2626; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 9px; font-weight: 500;">Wyloguj</button>
           </div>
-          <div class="modal-row" style="justify-content:flex-end">
-            <button type="button" class="close-btn" onclick="closeJacModal(event)">Anuluj</button>
-            <button type="button" class="check-btn" onclick="applyModalDates()">Zastosuj</button>
-          </div>
-          <div id="jacModalStatus" class="modal-status"></div>
-          <div id="jacBookings" class="jac-bookings" style="display:none"></div>
         </div>
-      </div>
+        <p class="subtitle">Wybierz daty pobytu</p>
+        <div id="alertContainer"></div>
+        <div class="loader" id="loader"><div class="spinner"></div><p>Wysyłanie...</p></div>
+        <form id="bookingForm">
+            <div class="form-group"><label for="name">Imię *</label><input type="text" id="name" name="name" required placeholder="Imię"></div>
+            <div class="form-group"><label for="surname">Nazwisko *</label><input type="text" id="surname" name="surname" required placeholder="Nazwisko"></div>
+            <div class="form-group"><label for="email">Email</label><input type="email" id="email" name="email" placeholder="email@example.com"></div>
+            <div class="form-row">
+                <div class="form-group"><label for="calosc">Całość (kwota)</label><input type="number" id="calosc" name="calosc" placeholder="0" step="0.01"></div>
+                <div class="form-group"><label for="ilosc_osob">Ilość osób</label><input type="number" id="ilosc_osob" name="ilosc_osob" placeholder="1" min="1"></div>
+            </div>
+            <div class="form-group"><label>Daty pobytu *</label><button type="button" id="datesBtn" style="background:#667eea;color:white;text-align:left;padding:7px;">Wybierz daty...</button></div>
+            <input type="hidden" id="Date_Form" name="Date_Form" required><input type="hidden" id="Date_to" name="Date_to" required>
+            <div class="form-row">
+                <div class="form-group"><label for="dateDisplay1">Od:</label><input type="text" id="dateDisplay1" placeholder="YYYY-MM-DD" readonly></div>
+                <div class="form-group"><label for="dateDisplay2">Do:</label><input type="text" id="dateDisplay2" placeholder="YYYY-MM-DD" readonly></div>
+            </div>
+            <div class="checkbox-group"><input type="checkbox" id="jacuzziCheckbox" name="IS_JACUZZI"><label for="jacuzziCheckbox" class="checkbox-label">Dodaj Jacuzzi (na te same daty)</label></div>
+            <div class="checkbox-group"><input type="checkbox" id="IS_advance_payment" name="IS_advance_payment"><label for="IS_advance_payment" class="checkbox-label">Wpłacam zaliczkę</label></div>
+            <div class="form-row">
+                <div class="form-group"><label for="amount_advance_payment">Kwota zaliczki</label><input type="number" id="amount_advance_payment" name="amount_advance_payment" placeholder="0" step="0.01"></div>
+                <div class="form-group"><label for="CURRENCY">Waluta</label><select id="CURRENCY" name="CURRENCY"><option value="PLN">PLN</option><option value="EUR">EUR</option><option value="USD">USD</option></select></div>
+            </div>
+            <div id="calculatorPreview" style="background:#f0f9ff;border:1px solid #c7d4ff;border-radius:8px;padding:12px;margin-bottom:12px;display:none">
+                <div style="font-size:10px;color:#666;margin-bottom:8px;font-weight:600;text-transform:uppercase">📊 Podsumowanie:</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:11px">
+                    <div style="background:white;padding:8px;border-radius:6px">
+                        <div style="color:#999;margin-bottom:4px">Całość:</div>
+                        <div style="font-size:14px;font-weight:600;color:#667eea"><span id="previewCalosc">0</span> <span id="previewCurrency">PLN</span></div>
+                    </div>
+                    <div style="background:white;padding:8px;border-radius:6px">
+                        <div style="color:#999;margin-bottom:4px">Zaliczka:</div>
+                        <div style="font-size:14px;font-weight:600;color:#059669"><span id="previewZaliczka">0</span> <span id="previewCurrency2">PLN</span></div>
+                    </div>
+                    <div style="background:white;padding:8px;border-radius:6px;grid-column:1/-1">
+                        <div style="color:#999;margin-bottom:4px">Pozostało do zapłaty:</div>
+                        <div style="font-size:16px;font-weight:700;color:#dc2626"><span id="previewPozostalo">0</span> <span id="previewCurrency3">PLN</span></div>
+                    </div>
+                </div>
+            </div>
+            <input type="hidden" id="jacuzziFromInput" name="jacuzzi_from">
+            <input type="hidden" id="jacuzziToInput" name="jacuzzi_to">
+            <div class="button-group">
+                <button type="submit" class="btn-submit" id="submitBtn">Zarezerwuj</button>
+                <button type="button" class="btn-cancel" onclick="window.location.href='/bookings/choose'">Anuluj</button>
+            </div>
+        </form>
+    </div>
 
-      <div class="actions">
-        <button type="submit" class="primary">Zarezerwuj</button>
-        <button type="button" class="secondary" onclick="location.href='/bookings/choose'">Anuluj</button>
-      </div>
-    </form>
-  </div>
+    <div id="datesModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Wybierz daty pobytu</div>
+            <div class="modal-body">
+                <div id="calendarContainer"></div>
+                <div id="selectedDates">Brak wybranych dat</div>
+                <div style="margin-top:10px;padding:8px;background:#f0f0f0;border-radius:5px;font-size:10px;">
+                    <span style="color:#155724;">● Dostępne</span> | <span style="color:#721c24;">● Zarezerwowane</span>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button type="button" class="btn-cancel" id="cancelDates">Anuluj</button>
+                <button type="button" class="btn-submit" id="confirmDates">Potwierdź</button>
+            </div>
+        </div>
+    </div>
 
-  <script>
-    // Licznik sesji - czas pobierany z serwera
-    let sessionTimeLeft = 0; // zostanie ustawiony z API
-    let sessionInterval;
+    <div id="jacuzziModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Wybierz daty Jacuzzi</div>
+            <div class="modal-body">
+                <div id="jacuzziCalendarContainer"></div>
+                <div id="jacuzziSelectedDates">Brak wybranych dat</div>
+                <div style="margin-top:10px;padding:8px;background:#f0f0f0;border-radius:5px;font-size:10px;">
+                    <span style="color:#155724;">● Dostępne</span> | <span style="color:#721c24;">● Zarezerwowane</span>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button type="button" class="btn-cancel" id="cancelJacuzzi">Anuluj</button>
+                <button type="button" class="btn-submit" id="confirmJacuzzi">Potwierdź</button>
+            </div>
+        </div>
+    </div>
 
-    function updateSessionTimer() {
-      const minutes = Math.floor(sessionTimeLeft / 60);
-      const seconds = sessionTimeLeft % 60;
-      const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-      
-      document.getElementById('sessionTimer').textContent = `Sesja: ${timeString}`;
-      
-      if (sessionTimeLeft <= 0) {
-        clearInterval(sessionInterval);
-        alert('Sesja wygasła. Zostaniesz przekierowany na stronę logowania.');
-        window.location.href = '/login.html';
-      }
-      sessionTimeLeft--;
-    }
+    <script>
+        // Session timer
+        let sessionTimeLeft = 0;
+        let sessionInterval;
 
-    function startSessionTimer() {
-      updateSessionTimer(); // natychmiastowa aktualizacja
-      sessionInterval = setInterval(updateSessionTimer, 1000);
-    }
-
-    // Załaduj informacje o zalogowanym użytkowniku
-    async function loadUserInfo() {
-      try {
-        const response = await fetch('/api/user');
-        const data = await response.json();
-        if (data.logged) {
-          document.getElementById('userEmail').textContent = data.email;
-          // Ustaw czas sesji z serwera
-          sessionTimeLeft = data.sessionTimeLeft || (15 * 60);
-          startSessionTimer(); // uruchom licznik po potwierdzeniu logowania
-        } else {
-          window.location.href = '/login.html';
+        function updateSessionTimer() {
+            const minutes = Math.floor(sessionTimeLeft / 60);
+            const seconds = sessionTimeLeft % 60;
+            const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            const timerElement = document.getElementById('sessionTimer');
+            if (timerElement) {
+                timerElement.textContent = `Sesja: ${timeString}`;
+            }
+            
+            if (sessionTimeLeft <= 0) {
+                clearInterval(sessionInterval);
+                alert('Sesja wygasła. Zostaniesz przekierowany na stronę logowania.');
+                window.location.href = '/login.html';
+            }
+            sessionTimeLeft--;
         }
-      } catch (err) {
-        console.error('Error loading user info:', err);
-      }
-    }
 
-    // Wylogowanie
-    function logout() {
-      if (confirm('Czy na pewno chcesz się wylogować?')) {
-        window.location.href = '/api/logout';
-      }
-    }
-
-    loadUserInfo();
-
-    const form2 = document.getElementById('apForm2');
-    const jacModal = document.getElementById('jacModal');
-    const jacFrom = document.getElementById('jacFrom');
-    const jacTo = document.getElementById('jacTo');
-    const jacModalStatus = document.getElementById('jacModalStatus');
-    const jacCheck2 = document.getElementById('jacCheck2');
-    const dateFrom2 = form2.elements['Date_Form'];
-    const dateTo2 = form2.elements['Date_to'];
-    const jacStatus2 = document.getElementById('jacStatus2');
-
-    // Date validation
-    dateFrom2.addEventListener('change', () => {
-      dateTo2.min = dateFrom2.value;
-      if (dateTo2.value && dateTo2.value < dateFrom2.value) {
-        dateTo2.value = '';
-      }
-    });
-    dateTo2.addEventListener('change', () => {
-      if (dateTo2.value < dateFrom2.value) {
-        alert('Data "do" nie może być wcześniejsza niż data "od".');
-        dateTo2.value = '';
-      }
-    });
-
-    function formatDate(date) {
-      return date.toISOString().slice(0, 10);
-    }
-
-    function setDefaultDates() {
-      const today = new Date();
-      const nextDay = new Date(today);
-      nextDay.setDate(today.getDate() + 1);
-
-      if (!dateFrom2.value) dateFrom2.value = formatDate(today);
-      if (!dateTo2.value) dateTo2.value = formatDate(nextDay);
-
-      jacFrom.value = dateFrom2.value;
-      jacTo.value = dateTo2.value;
-    }
-
-    function openJacModal() {
-      setDefaultDates();
-      updateJacModalLimits();
-      jacModal.style.display = 'flex';
-      checkJac();
-    }
-
-    function closeJacModal(event) {
-      if (event) event.stopPropagation();
-      jacModal.style.display = 'none';
-      jacModalStatus.textContent = '';
-    }
-
-    function updateJacModalLimits() {
-      const today = new Date();
-      const min = formatDate(today);
-      const max = formatDate(new Date(today.getFullYear(), today.getMonth() + 3, today.getDate()));
-      jacFrom.min = min;
-      jacTo.min = jacFrom.value || min;
-      jacFrom.max = max;
-      jacTo.max = max;
-    }
-
-    function applyModalDates() {
-      // Jacuzzi można rezerwować tylko w terminie rezerwacji apartamentu.
-      // Nie pozwalamy ustawiać innego zakresu w modalu.
-      checkJac();
-      closeJacModal();
-    }
-
-    function formatDateDDMMYY(ymd) {
-      if (!ymd) return '';
-      const datePart = ymd.split('T')[0];
-      const parts = datePart.split('-');
-      if (parts.length !== 3) return ymd;
-      const [y, m, d] = parts;
-      return `${d}-${m}-${y.slice(-2)}`;
-    }
-
-    function renderJacBookings(bookings) {
-      const container = document.getElementById('jacBookings');
-      if (!bookings || bookings.length === 0) {
-        container.innerHTML = '<div class="no-bookings">Brak rezerwacji jacuzzi w wybranym zakresie.</div>';
-        container.style.display = 'block';
-        return;
-      }
-
-      const rows = bookings.map(b => {
-        const cls = b.apart === 1 ? 'apart1' : 'apart2';
-        return `<tr class="${cls}"><td>Apartament ${b.apart}</td><td>${formatDateDDMMYY(b.date_form)}</td><td>${formatDateDDMMYY(b.date_to)}</td></tr>`;
-      }).join('');
-
-      container.innerHTML = `
-        <table>
-          <thead>
-            <tr><th>Apartament</th><th>Od</th><th>Do</th></tr>
-          </thead>
-          <tbody>${rows}</tbody>
-        </table>
-      `;
-      container.style.display = 'block';
-    }
-
-    async function checkJac(){
-      jacStatus2.style.display='none';
-      jacModalStatus.textContent = '';
-      document.getElementById('jacBookings').style.display = 'none';
-
-      if(!jacCheck2.checked) return true;
-      const f = dateFrom2.value, t = dateTo2.value;
-      if(!f || !t) return true;
-      const messageEl = jacModal.style.display === 'flex' ? jacModalStatus : jacStatus2;
-      messageEl.textContent='Sprawdzanie dostępności...';
-      messageEl.style.display='block';
-
-      try{
-        const res = await fetch('/booking/jacuuzi/check?from=' + encodeURIComponent(f) + '&to=' + encodeURIComponent(t));
-        const data = await res.json();
-        renderJacBookings(data.bookings);
-
-        if(data.available){
-          messageEl.textContent='Jacuzzi dostępne';
-          messageEl.style.color='green';
-          return true;
-        } else {
-          messageEl.textContent='Jacuzzi NIEDOSTĘPNE w tym terminie';
-          messageEl.style.color='red';
-          return false;
+        function startSessionTimer() {
+            updateSessionTimer();
+            sessionInterval = setInterval(updateSessionTimer, 1000);
         }
-      }catch(e){
-        messageEl.textContent='Błąd sprawdzania dostępności';
-        messageEl.style.color='orange';
-        return false;
-      }
-    }
 
-    jacCheck2.addEventListener('change', () => {
-      if (jacCheck2.checked) openJacModal();
-      else closeJacModal();
-    });
-
-    jacFrom.addEventListener('change', () => { jacTo.min = jacFrom.value; });
-    jacTo.addEventListener('change', () => { jacFrom.max = jacTo.value; });
-
-    dateFrom2.addEventListener('change', () => { if(jacCheck2.checked) checkJac(); });
-    dateTo2.addEventListener('change', () => { if(jacCheck2.checked) checkJac(); });
-
-    form2.addEventListener('submit', async (ev)=>{
-      ev.preventDefault();
-
-      if (jacCheck2.checked) {
-        const ok = await checkJac();
-        if (!ok) {
-          alert('Jacuzzi zajęte w wybranym terminie.');
-          return;
+        async function loadUserInfo() {
+            try {
+                const response = await fetch('/api/user');
+                const data = await response.json();
+                if (data.logged) {
+                    const userEmailEl = document.getElementById('userEmail');
+                    if (userEmailEl) {
+                        userEmailEl.textContent = data.email;
+                    }
+                    sessionTimeLeft = data.sessionTimeLeft || (15 * 60);
+                    startSessionTimer();
+                    loadBookedDates();
+                } else {
+                    window.location.href = '/login.html';
+                }
+            } catch (err) {
+                console.error('Error loading user info:', err);
+                loadBookedDates();
+            }
         }
-      }
 
-      const formData = new FormData(form2);
-      const res = await fetch(form2.action, {
-        method: 'POST',
-        body: new URLSearchParams(formData),
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => null);
-        alert(data?.error || 'Błąd podczas rezerwacji. Spróbuj ponownie.');
-        return;
-      }
+        function logout() {
+            if (confirm('Czy na pewno chcesz się wylogować?')) {
+                window.location.href = '/api/logout';
+            }
+        }
 
-      window.location.href = '/bookings/choose';
-    });
-  </script>
+        const form = document.getElementById('bookingForm');
+        const datesBtn = document.getElementById('datesBtn');
+        const datesModal = document.getElementById('datesModal');
+        const jacuzziCheckbox = document.getElementById('jacuzziCheckbox');
+        const jacuzziModal = document.getElementById('jacuzziModal');
+        const dateFromInput = document.getElementById('Date_Form');
+        const dateToInput = document.getElementById('Date_to');
+        const submitBtn = document.getElementById('submitBtn');
+        const loader = document.getElementById('loader');
+        const alertContainer = document.getElementById('alertContainer');
+        const dateDisplay1 = document.getElementById('dateDisplay1');
+        const dateDisplay2 = document.getElementById('dateDisplay2');
+        const jacuzziFromInput = document.getElementById('jacuzziFromInput');
+        const jacuzziToInput = document.getElementById('jacuzziToInput');
+        
+        let booked = [];
+        let jacuzziBookings = [];
+        let selectedFrom = null;
+        let selectedTo = null;
+        let jacuzziFrom = null;
+        let jacuzziTo = null;
+        let currentSelectMode = 'from';
+        let currentCalendarYear = new Date().getFullYear();
+        let currentCalendarMonth = new Date().getMonth();
+
+        function showAlert(message, type = 'error') {
+            alertContainer.innerHTML = `<div class="alert alert-${type} show">${message}</div>`;
+            setTimeout(() => { alertContainer.innerHTML = ''; }, 5000);
+        }
+
+        async function loadBookedDates() {
+            try {
+                const [resApart, resJacuzzi] = await Promise.all([
+                    fetch('/api/bookings?apart=2'),
+                    fetch('/api/jacuzzi-bookings')
+                ]);
+                
+                if (!resApart.ok) {
+                    console.error('API error:', resApart.status);
+                    return;
+                }
+                
+                booked = (await resApart.json()).bookings || [];
+                jacuzziBookings = ((await resJacuzzi.json()).bookings || []).filter(b => !b.APART || b.APART === 2);
+                
+                console.log('Apartment bookings:', booked.length);
+                console.log('Jacuzzi bookings:', jacuzziBookings.length);
+                
+                // Refresh visible calendar if modal is open
+                const calendarContainer = document.getElementById('calendarContainer');
+                const jacuzziContainer = document.getElementById('jacuzziCalendarContainer');
+                if (calendarContainer && calendarContainer.offsetParent !== null) {
+                    refreshCalendar(false);
+                }
+                if (jacuzziContainer && jacuzziContainer.offsetParent !== null) {
+                    refreshCalendar(true);
+                }
+            } catch (err) {
+                console.error('Error loading bookings:', err);
+            }
+        }
+
+        function isDateBooked(date) {
+            const dateStr = date.toISOString().split('T')[0];
+            return booked.some(b => {
+                if (!b || !b.Date_Form || !b.Date_to) return false;
+                return dateStr >= b.Date_Form && dateStr < b.Date_to;
+            });
+        }
+
+        function isJacuzziBooked(date) {
+            const dateStr = date.toISOString().split('T')[0];
+            return jacuzziBookings.some(b => {
+                if (!b || !b.Date_Form || !b.Date_to) return false;
+                return dateStr >= b.Date_Form && dateStr < b.Date_to;
+            });
+        }
+
+        function generateCalendar(year, month, isJacuzzi = false) {
+            const wrapper = document.createElement('div');
+            
+            const header = document.createElement('div');
+            header.style.cssText = 'display:flex; gap:10px; align-items:center; margin-bottom:10px; justify-content:space-between;';
+            
+            const monthYear = document.createElement('div');
+            monthYear.style.cssText = 'font-weight:600; font-size:12px; flex:1; text-align:center;';
+            const months = ['Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec', 'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień'];
+            monthYear.textContent = `${months[month]} ${year}`;
+            
+            const prevBtn = document.createElement('button');
+            prevBtn.textContent = '◀';
+            prevBtn.style.cssText = 'padding:4px 8px; font-size:11px; border:1px solid #ddd; background:#f0f0f0; cursor:pointer; border-radius:3px;';
+            prevBtn.type = 'button';
+            prevBtn.addEventListener('click', () => {
+                currentCalendarMonth--;
+                if (currentCalendarMonth < 0) {
+                    currentCalendarMonth = 11;
+                    currentCalendarYear--;
+                }
+                refreshCalendar(isJacuzzi);
+            });
+            
+            const nextBtn = document.createElement('button');
+            nextBtn.textContent = '▶';
+            nextBtn.style.cssText = 'padding:4px 8px; font-size:11px; border:1px solid #ddd; background:#f0f0f0; cursor:pointer; border-radius:3px;';
+            nextBtn.type = 'button';
+            nextBtn.addEventListener('click', () => {
+                currentCalendarMonth++;
+                if (currentCalendarMonth > 11) {
+                    currentCalendarMonth = 0;
+                    currentCalendarYear++;
+                }
+                refreshCalendar(isJacuzzi);
+            });
+            
+            header.appendChild(prevBtn);
+            header.appendChild(monthYear);
+            header.appendChild(nextBtn);
+            wrapper.appendChild(header);
+            
+            const table = document.createElement('table');
+            table.className = 'calendar';
+            
+            const headerRow = table.insertRow();
+            ['Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'Sb', 'Nd'].forEach(day => {
+                const th = document.createElement('th');
+                th.textContent = day;
+                headerRow.appendChild(th);
+            });
+
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            let date = new Date(firstDay);
+            date.setDate(date.getDate() - date.getDay() + 1);
+
+            while (date <= lastDay || date.getDay() !== 1) {
+                const row = table.insertRow();
+                for (let i = 0; i < 7; i++) {
+                    const cell = row.insertCell();
+                    
+                    if (date.getMonth() === month) {
+                        cell.textContent = date.getDate();
+                        const isPast = date < today;
+                        const isBooked = isDateBooked(date);
+                        const jacuzziBooked = isJacuzziBooked(date);
+                        const dateStr = date.toISOString().split('T')[0];
+                        
+                        if (isPast) {
+                            cell.className = 'empty';
+                        } else if (isBooked && !isJacuzzi) {
+                            cell.className = 'booked';
+                        } else if (jacuzziBooked && isJacuzzi) {
+                            cell.className = 'booked';
+                        } else {
+                            const isInRange = (selectedFrom && selectedTo && dateStr >= selectedFrom && dateStr <= selectedTo) ||
+                                            (jacuzziFrom && jacuzziTo && dateStr >= jacuzziFrom && dateStr <= jacuzziTo);
+                            
+                            cell.className = isInRange ? 'selected' : 'available';
+                            cell.addEventListener('click', () => onDateClick(dateStr, isJacuzzi));
+                        }
+                    } else {
+                        cell.className = 'empty';
+                    }
+                    date.setDate(date.getDate() + 1);
+                }
+            }
+            
+            wrapper.appendChild(table);
+            return wrapper;
+        }
+        
+        function refreshCalendar(isJacuzzi) {
+            const container = isJacuzzi ? 
+                document.getElementById('jacuzziCalendarContainer') : 
+                document.getElementById('calendarContainer');
+            
+            container.innerHTML = '';
+            container.appendChild(generateCalendar(currentCalendarYear, currentCalendarMonth, isJacuzzi));
+        }
+
+        function onDateClick(dateStr, isJacuzzi = false) {
+            if (isJacuzzi) {
+                if (currentSelectMode === 'jac-from') {
+                    jacuzziFrom = dateStr;
+                    jacuzziTo = null;
+                    currentSelectMode = 'jac-to';
+                } else if (currentSelectMode === 'jac-to') {
+                    const from = new Date(jacuzziFrom);
+                    const to = new Date(dateStr);
+                    if (to <= from) {
+                        showAlert('Data do musi być późniejsza niż data od');
+                        return;
+                    }
+                    jacuzziTo = dateStr;
+                }
+                updateJacuzziDisplay();
+                refreshCalendar(true);
+            } else {
+                if (currentSelectMode === 'from') {
+                    selectedFrom = dateStr;
+                    selectedTo = null;
+                    currentSelectMode = 'to';
+                } else if (currentSelectMode === 'to') {
+                    const from = new Date(selectedFrom);
+                    const to = new Date(dateStr);
+                    if (to <= from) {
+                        showAlert('Data do musi być późniejsza niż data od');
+                        return;
+                    }
+                    selectedTo = dateStr;
+                }
+                updateDateDisplay();
+                refreshCalendar(false);
+            }
+        }
+
+        function updateDateDisplay() {
+            const elem = document.getElementById('selectedDates');
+            if (selectedFrom && selectedTo) {
+                const from = new Date(selectedFrom).toLocaleDateString('pl-PL');
+                const to = new Date(selectedTo).toLocaleDateString('pl-PL');
+                elem.innerHTML = `<strong>✓ ${from} - ${to}</strong>`;
+                dateDisplay1.value = selectedFrom;
+                dateDisplay2.value = selectedTo;
+            } else if (selectedFrom) {
+                const from = new Date(selectedFrom).toLocaleDateString('pl-PL');
+                elem.innerHTML = `<strong>Od: ${from}</strong><br><em style="color:#666; font-size:10px;">👉 Kliknij datę do...</em>`;
+            } else {
+                elem.innerHTML = 'Kliknij datę początkową';
+            }
+        }
+
+        function updateJacuzziDisplay() {
+            const elem = document.getElementById('jacuzziSelectedDates');
+            if (jacuzziFrom && jacuzziTo) {
+                const from = new Date(jacuzziFrom).toLocaleDateString('pl-PL');
+                const to = new Date(jacuzziTo).toLocaleDateString('pl-PL');
+                elem.innerHTML = `<strong>✓ ${from} - ${to}</strong>`;
+            } else if (jacuzziFrom) {
+                const from = new Date(jacuzziFrom).toLocaleDateString('pl-PL');
+                elem.innerHTML = `<strong>Od: ${from}</strong><br><em style="color:#666; font-size:10px;">👉 Kliknij datę do...</em>`;
+            } else {
+                elem.innerHTML = 'Kliknij datę Jacuzzi od...';
+            }
+        }
+
+        datesBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            // Refresh bookings data before opening calendar (real-time sync)
+            await loadBookedDates();
+            
+            currentSelectMode = selectedFrom ? 'to' : 'from';
+            currentCalendarYear = new Date().getFullYear();
+            currentCalendarMonth = new Date().getMonth();
+            
+            const ctr = document.getElementById('calendarContainer');
+            ctr.innerHTML = '';
+            ctr.appendChild(generateCalendar(currentCalendarYear, currentCalendarMonth, false));
+            datesModal.classList.add('show');
+        });
+
+        document.getElementById('cancelDates').addEventListener('click', () => {
+            datesModal.classList.remove('show');
+        });
+
+        document.getElementById('confirmDates').addEventListener('click', () => {
+            if (!selectedFrom || !selectedTo) {
+                showAlert('Wybierz zarówno datę od jak i do');
+                return;
+            }
+            dateFromInput.value = selectedFrom;
+            dateToInput.value = selectedTo;
+            dateDisplay1.value = selectedFrom;
+            dateDisplay2.value = selectedTo;
+            datesBtn.textContent = `${selectedFrom} - ${selectedTo}`;
+            datesModal.classList.remove('show');
+        });
+
+        jacuzziCheckbox.addEventListener('change', async function() {
+            if (this.checked) {
+                if (!selectedFrom || !selectedTo) {
+                    alert('Najpierw wybierz daty pobytu');
+                    this.checked = false;
+                    return;
+                }
+                // Refresh jacuzzi bookings data before opening modal
+                await loadBookedDates();
+                
+                // Automatically set Jacuzzi to apartment dates
+                jacuzziFrom = selectedFrom;
+                jacuzziTo = selectedTo;
+                jacuzziFromInput.value = selectedFrom;
+                jacuzziToInput.value = selectedTo;
+                
+                // Open modal to allow changing if needed
+                currentSelectMode = 'jac-from';
+                
+                const apartStart = new Date(selectedFrom);
+                currentCalendarYear = apartStart.getFullYear();
+                currentCalendarMonth = apartStart.getMonth();
+                
+                const ctr = document.getElementById('jacuzziCalendarContainer');
+                ctr.innerHTML = '';
+                ctr.appendChild(generateCalendar(currentCalendarYear, currentCalendarMonth, true));
+                
+                updateJacuzziDisplay();
+                jacuzziModal.classList.add('show');
+            } else {
+                jacuzziFrom = null;
+                jacuzziTo = null;
+                jacuzziFromInput.value = '';
+                jacuzziToInput.value = '';
+            }
+        });
+
+        document.getElementById('cancelJacuzzi').addEventListener('click', () => {
+            jacuzziCheckbox.checked = false;
+            jacuzziFromInput.value = '';
+            jacuzziToInput.value = '';
+            jacuzziModal.classList.remove('show');
+        });
+
+        document.getElementById('confirmJacuzzi').addEventListener('click', () => {
+            if (!jacuzziFrom || !jacuzziTo) {
+                showAlert('Wybierz zarówno datę od jak i do dla Jacuzzi');
+                return;
+            }
+            jacuzziFromInput.value = jacuzziFrom;
+            jacuzziToInput.value = jacuzziTo;
+            jacuzziModal.classList.remove('show');
+            showAlert(`✓ Jacuzzi zarezerwowane: ${jacuzziFrom} - ${jacuzziTo}`, 'success');
+        });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!dateFromInput.value || !dateToInput.value) {
+                showAlert('Wybierz daty');
+                return;
+            }
+
+            const formData = {
+                email: form.elements['email'].value,
+                name: form.elements['name'].value,
+                surname: form.elements['surname'].value,
+                Date_Form: dateFromInput.value,
+                Date_to: dateToInput.value,
+                IS_advance_payment: form.elements['IS_advance_payment'].checked ? 1 : 0,
+                amount_advance_payment: form.elements['amount_advance_payment'].value || 0,
+                CURRENCY: form.elements['CURRENCY'].value || 'PLN',
+                calosc: form.elements['calosc'].value || 0,
+                ilosc_osob: form.elements['ilosc_osob'].value || 1,
+                IS_JACUZZI: (jacuzziFromInput.value && jacuzziToInput.value) ? 1 : 0,
+                jacuzzi_from: jacuzziFromInput.value || null,
+                jacuzzi_to: jacuzziToInput.value || null
+            };
+
+            try {
+                loader.classList.add('show');
+                const res = await fetch('/booking/ap2', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+
+                loader.classList.remove('show');
+                const data = await res.json();
+                
+                if (res.ok && data.success) {
+                    showAlert('✓ Rezerwacja dodana!', 'success');
+                    setTimeout(() => {
+                        window.location.href = '/bookings/choose';
+                    }, 1000);
+                } else {
+                    showAlert('Błąd: ' + (data.error || 'Nie udało się dokonać rezerwacji'));
+                }
+            } catch (err) {
+                loader.classList.remove('show');
+                console.error('Error:', err);
+                showAlert('Błąd sieci: ' + err.message);
+            }
+        });
+
+        loadUserInfo();
+
+        // Calculator for remaining payment
+        const caloscInput = document.getElementById('calosc');
+        const zaliczkaInput = document.getElementById('amount_advance_payment');
+        const currencySelect = document.getElementById('CURRENCY');
+        const calculatorPreview = document.getElementById('calculatorPreview');
+
+        function updateCalculator() {
+            const calosc = parseFloat(caloscInput.value) || 0;
+            const zaliczka = parseFloat(zaliczkaInput.value) || 0;
+            const pozostalo = Math.max(0, calosc - zaliczka);
+            const currency = currencySelect.value;
+
+            // Update preview
+            document.getElementById('previewCalosc').textContent = calosc.toFixed(2);
+            document.getElementById('previewZaliczka').textContent = zaliczka.toFixed(2);
+            document.getElementById('previewPozostalo').textContent = pozostalo.toFixed(2);
+            
+            // Update all currency displays
+            document.getElementById('previewCurrency').textContent = currency;
+            document.getElementById('previewCurrency2').textContent = currency;
+            document.getElementById('previewCurrency3').textContent = currency;
+
+            // Show calculator only if there are values
+            if (calosc > 0 || zaliczka > 0) {
+                calculatorPreview.style.display = 'block';
+            } else {
+                calculatorPreview.style.display = 'none';
+            }
+        }
+
+        // Add event listeners
+        caloscInput.addEventListener('input', updateCalculator);
+        zaliczkaInput.addEventListener('input', updateCalculator);
+        currencySelect.addEventListener('change', updateCalculator);
+
+        // Initial check
+        updateCalculator();
+    </script>
 </body>
 </html>
